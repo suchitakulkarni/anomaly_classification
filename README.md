@@ -57,7 +57,7 @@ project
 ```bash
 python main.py
 ```
-Currently ```main.py``` will not retrain the model, to do that set the ```train_again``` flag to ```True``` in ```main.py```. 
+* Currently ```main.py``` will not retrain the model, to do that set the ```train_again``` flag to ```True``` in ```main.py```. 
 ---
 ## Dependencies
 
