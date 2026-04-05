@@ -2,7 +2,25 @@
 import torch
 import numpy as np
 import random
-import os
+import os, sys, logging
+from src.config import Config
+
+logger = logging.getLogger(__name__)
+
+def setup_logging(level=logging.INFO):
+    """
+    Call once from main.py. All modules use logging.getLogger(__name__)
+    and inherit this configuration automatically.
+    """
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler(os.path.join(Config.RESULTS_DIR, "run.log"), mode="w")
+        ]
+    )
 
 def stitch_windows(windows, window_size):
     """
@@ -48,9 +66,9 @@ def set_all_seeds(seed=42):
     # Python hash seed (for reproducibility across runs)
     os.environ['PYTHONHASHSEED'] = str(seed)
     
-    print(f"All random seeds set to: {seed}")
-    print(f"CUDA deterministic mode: {torch.backends.cudnn.deterministic}")
-    print(f"CUDA benchmark mode: {torch.backends.cudnn.benchmark}")
+    logger.info("All random seeds set to: %s", seed)
+    logger.info("CUDA deterministic mode: %s", torch.backends.cudnn.deterministic)
+    logger.info("CUDA benchmark mode: %s", torch.backends.cudnn.benchmark)
 
 
 def seed_worker(worker_id):
@@ -133,7 +151,7 @@ def unit_leakage_test_suite(dt, omega_true, amplitudes=[0.5, 1.0, 2.0], scalers=
                 ])
             ).item()
 
-            print(f"[Scaler: {scaler_type}, Amp: {A}] Correct omega loss: {phy_loss_correct:.8f}, Wrong omega loss: {phy_loss_wrong:.8f}")
+            logger.info(f"[Scaler: %s, Amp: %s] Correct omega loss: %0.8f, Wrong omega loss: %.8f", scaler_type, A, phy_loss_correct, phy_loss_wrong)
 
             # Visual check: plot residuals for wrong omega for first trajectory
             with torch.no_grad():
@@ -155,9 +173,9 @@ def unit_leakage_test_suite(dt, omega_true, amplitudes=[0.5, 1.0, 2.0], scalers=
 
             # Basic automatic check
             if phy_loss_wrong <= phy_loss_correct*10:
-                print("WARNING: Physics loss not sensitive to omega. Possible unit leakage!")
+                logger.info("WARNING: Physics loss not sensitive to omega. Possible unit leakage!")
             else:
-                print("Physics loss responds correctly. No unit leakage detected.\n")
+                logger.info("Physics loss responds correctly. No unit leakage detected.\n")
 
 
 def test_physics_loss_units(dt, omega_true, scaler_type="StandardScaler"):
@@ -203,13 +221,13 @@ def test_physics_loss_units(dt, omega_true, scaler_type="StandardScaler"):
         scaler=scaler
     )
     
-    print(f"Physics loss with correct omega ({scaler_type}): {phy_loss_correct.item():.8f}")
-    print(f"Physics loss with wrong omega ({scaler_type}):   {phy_loss_wrong.item():.8f}")
+    logger.info(f"Physics loss with correct omega (%s): %.8f", scaler_type, phy_loss_correct.item())
+    logger.info(f"Physics loss with wrong omega (%s):   %.8f", scaler_type, phy_loss_wrong.item())
     
     if phy_loss_wrong <= phy_loss_correct*10:
-        print("WARNING: Physics loss is not sensitive to omega! Potential unit leakage.")
+        logger.info("WARNING: Physics loss is not sensitive to omega! Potential unit leakage.")
     else:
-        print("Physics loss responds correctly to omega. No unit leakage detected.")
+        logger.info("Physics loss responds correctly to omega. No unit leakage detected.")
 
 
 def physics_residual_physical(x_phys, omega, dt):

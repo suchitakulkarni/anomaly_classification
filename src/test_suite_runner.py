@@ -1,8 +1,10 @@
 import numpy as np
 import torch
-import os
+import os, logging
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class AnomalyTestResult:
@@ -89,10 +91,10 @@ def run_anomaly_test_suite(config, model, x_clean, scaler, device,
           "dt": dt, "seed": config.RANDOM_STATE + 8}),
     ]
     
-    print(f"\n=== Running Anomaly Test Suite for {model_name} ===")
+    logger.info(f"=== Running Anomaly Test Suite for {model_name} ===")
     
     for anomaly_type, inject_fn, kwargs in anomaly_configs:
-        print(f"Testing: {anomaly_type}...")
+        logger.info("Testing: %s...", anomaly_type)
         if anomaly_type == 'baseline':
             x_anom = inject_fn(**kwargs)
             anom_idxs = [0]
@@ -120,7 +122,7 @@ def run_anomaly_test_suite(config, model, x_clean, scaler, device,
             model_name=model_name
         )
     
-    print(f"Completed {len(results)} anomaly tests.\n")
+    logger.info(f"Completed {len(results)} anomaly tests.\n")
     return results
 
 

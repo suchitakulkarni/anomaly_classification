@@ -5,42 +5,10 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt 
-import os
+import os, logging
 
+logger = logging.getLogger(__name__)
 
-'''def calculate_physics_loss(reconstruction, omega, dt, scaler):
-    """
-    Physics loss computed in physical coordinates.
-    Works for StandardScaler and MinMaxScaler.
-    """
-    x_scaled = reconstruction.squeeze(-1)
-
-    d2x_scaled_dt2 = (
-        x_scaled[:, 2:]
-        - 2.0 * x_scaled[:, 1:-1]
-        + x_scaled[:, :-2]
-    ) / (dt ** 2)
-
-    device = reconstruction.device
-    dtype = reconstruction.dtype
-
-    # Detect scaler type
-    if isinstance(scaler, StandardScaler):  # StandardScaler
-        alpha = torch.tensor(scaler.scale_[0], device=device, dtype=dtype)
-        beta = torch.tensor(scaler.mean_[0], device=device, dtype=dtype)
-    else:  # MinMaxScaler
-        alpha = torch.tensor(
-            scaler.data_max_[0] - scaler.data_min_[0],
-            device=device,
-            dtype=dtype
-        )
-        beta = torch.tensor(scaler.data_min_[0], device=device, dtype=dtype)
-
-    x_phys = alpha * x_scaled[:, 1:-1] + beta
-    d2x_phys_dt2 = alpha * d2x_scaled_dt2
-
-    residual = d2x_phys_dt2 + (omega ** 2) * x_phys
-    return torch.mean(residual ** 2)'''
 
 def inverse_scale(x_scaled, scaler):
     """
@@ -148,7 +116,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs,
         history['total_loss'].append(epoch_total / n)
 
         if epoch == num_epochs:
-            print(f"Epoch {epoch:03d}/{num_epochs} | Loss: {epoch_total/n:.6f}")
+            logger.info(f"Epoch %03d/%s | Loss: %.6f", epoch, num_epochs, epoch_total)
 
     return model, history
 
@@ -286,12 +254,10 @@ def train_model_with_validation(model, train_loader, val_loader, criterion, opti
         history['overfitting_gap'].append(overfitting_gap)
         # Print progress every 50 epochs
         if epoch % 10 == 0 or epoch == num_epochs:
-            print(f"Epoch {epoch:03d}/{num_epochs} | "
-                  f"Train Loss: {avg_train_total:.6f} | "
-                  f"Val Loss: {avg_val_total:.6f} | "
-                  f"Val phy Loss: {avg_val_phy:.6f} | "
-                  f"Gap: {overfitting_gap:.6f} | "
-                  f"Best: {best_epoch}")
+            logger.info(
+            "Epoch %03d/%d | Train Loss: %.6f | Val Loss: %.6f | Val Phy Loss: %.6f | Gap: %.6f | Best: %s",
+            epoch, num_epochs, avg_train_total, avg_val_total, avg_val_phy, overfitting_gap, best_epoch
+            )
         
         # Early stopping check
         if stop_early:
@@ -304,7 +270,7 @@ def train_model_with_validation(model, train_loader, val_loader, criterion, opti
             else:
                 epochs_without_improvement += 1
             if epochs_without_improvement >= patience:
-                print(f"\nEarly stopping at epoch {epoch}. Best epoch was {best_epoch}.")
+                logger.info("Early stopping at epoch %s. Best epoch was %s.", epoch, best_epoch)
                 break
         
         
@@ -316,6 +282,6 @@ def train_model_with_validation(model, train_loader, val_loader, criterion, opti
     # Load best model
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
-        print(f"Loaded best model from epoch {best_epoch}")
+        logger.info("Loaded best model from epoch %s", best_epoch)
     
     return model, history, best_epoch

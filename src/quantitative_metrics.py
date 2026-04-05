@@ -4,7 +4,9 @@ from sklearn.preprocessing import StandardScaler
 from scipy.spatial.distance import pdist, squareform
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
+import os, sys, logging
+
+logger = logging.getLogger(__name__)
 
 
 def compute_cluster_separation_metrics(results, model_name="Model"):
@@ -38,10 +40,10 @@ def compute_cluster_separation_metrics(results, model_name="Model"):
     davies_bouldin = davies_bouldin_score(X, labels)
     calinski_harabasz = calinski_harabasz_score(X, labels)
     
-    print(f"\n=== {model_name} Separation Metrics ===")
-    print(f"Silhouette Score: {silhouette:.4f} (higher is better, range [-1, 1])")
-    print(f"Davies-Bouldin Index: {davies_bouldin:.4f} (lower is better)")
-    print(f"Calinski-Harabasz Index: {calinski_harabasz:.2f} (higher is better)")
+    logger.info("=== %s Separation Metrics ===", model_name)
+    logger.info("Silhouette Score: %.4f (higher is better, range [-1, 1])", silhouette)
+    logger.info("Davies-Bouldin Index: %.4f (lower is better)", davies_bouldin)
+    logger.info("Calinski-Harabasz Index: %.2f (higher is better)", calinski_harabasz)
     
     return {
         "silhouette": silhouette,
@@ -92,8 +94,8 @@ def compute_pairwise_separability(results, model_name="Model"):
                 euclidean_dist = np.linalg.norm(mean_i - mean_j)
                 separability_matrix[i, j] = euclidean_dist
     
-    print(f"\n=== {model_name} Pairwise Separability (Mahalanobis Distance) ===")
-    print("Larger values indicate better separation between anomaly types")
+    logger.info("=== %s Pairwise Separability (Mahalanobis Distance) ===", model_name)
+    logger.info("Larger values indicate better separation between anomaly types")
     
     return separability_matrix, anomaly_types
 
@@ -119,14 +121,14 @@ def plot_separability_heatmap(sep_matrix, anomaly_types, model_name, save_dir="r
     filename = f"separability_heatmap_{model_name.lower().replace(' ', '_').replace('-', '_')}.png"
     plt.savefig(os.path.join(save_dir, filename), dpi=300)
     plt.close()
-    print(f"Saved: {filename}")
+    logger.info(f"Saved: {filename}")
 
 
 def compute_physics_loss_reduction(pinn_results, standard_results):
     """
     Computes how much physics loss is reduced by physics-informed model.
     """
-    print("\n=== Physics Loss Reduction Analysis ===")
+    logger.info("=== Physics Loss Reduction Analysis ===")
     
     for anom_type in pinn_results.keys():
         pinn_mean = np.mean(pinn_results[anom_type].physics_values)
@@ -135,7 +137,7 @@ def compute_physics_loss_reduction(pinn_results, standard_results):
         reduction_factor = std_mean / pinn_mean if pinn_mean > 0 else np.inf
         reduction_pct = ((std_mean - pinn_mean) / std_mean) * 100 if std_mean > 0 else 0
         
-        print(f"{anom_type:25s}: {reduction_factor:8.1f}x reduction ({reduction_pct:5.1f}% decrease)")
+        logger.info("%-25s: %8.1fx reduction (%5.1f%% decrease)", anom_type, reduction_factor, reduction_pct)
     
     all_pinn_phy = np.concatenate([r.physics_values for r in pinn_results.values()])
     all_std_phy = np.concatenate([r.physics_values for r in standard_results.values()])
@@ -143,7 +145,8 @@ def compute_physics_loss_reduction(pinn_results, standard_results):
     overall_reduction = np.mean(all_std_phy) / np.mean(all_pinn_phy)
     overall_pct = ((np.mean(all_std_phy) - np.mean(all_pinn_phy)) / np.mean(all_std_phy)) * 100
     
-    print(f"\n{'OVERALL':25s}: {overall_reduction:8.1f}x reduction ({overall_pct:5.1f}% decrease)")
+    #logger.info("{'OVERALL':25s}: %8.1fx reduction (%5.1f % decrease)", overall_reduction, overall_pct)
+    logger.info("%-25s: %8.1fx reduction (%5.1f%% decrease)", "OVERALL", overall_reduction, overall_pct)
 
 
 def compare_classification_accuracy(pinn_results, standard_results):
@@ -175,38 +178,40 @@ def compare_classification_accuracy(pinn_results, standard_results):
     pinn_scores = cross_val_score(knn, X_pinn, y_pinn, cv=5)
     std_scores = cross_val_score(knn, X_std, y_std, cv=5)
     
-    print("\n=== Classification Accuracy (5-fold CV with KNN) ===")
-    print(f"Physics-Informed: {pinn_scores.mean():.3f} +/- {pinn_scores.std():.3f}")
-    print(f"Standard:         {std_scores.mean():.3f} +/- {std_scores.std():.3f}")
-    print(f"Improvement:      {(pinn_scores.mean() - std_scores.mean())*100:.1f} percentage points")
+    logger.info("=== Classification Accuracy (5-fold CV with KNN) ===")
+    logger.info("Physics-Informed: %.3f +/- %.3f", pinn_scores.mean(), pinn_scores.std())
+    #print(f"Standard:         %.3f +/- :.3f", std_scores.mean(), std_scores.std())
+    #print(f"Improvement:      %.1f percentage points", (pinn_scores.mean() - std_scores.mean())*100)
+    logger.info("Standard:         %.3f +/- %.3f", std_scores.mean(), std_scores.std())
+    logger.info("Improvement:      %.1f percentage points", (pinn_scores.mean() - std_scores.mean())*100)
 
 
 def run_full_quantitative_analysis(pinn_results, standard_results, save_dir="results"):
     """
     Runs all quantitative analyses and generates comparison report.
     """
-    print("\n" + "="*70)
-    print("QUANTITATIVE SEPARATION ANALYSIS")
-    print("="*70)
+    logger.info("="*70)
+    logger.info("QUANTITATIVE SEPARATION ANALYSIS")
+    logger.info("="*70)
     
     pinn_metrics = compute_cluster_separation_metrics(pinn_results, "Physics-Informed")
     std_metrics = compute_cluster_separation_metrics(standard_results, "Standard")
     
-    print("\n" + "-"*70)
-    print("INTERPRETATION:")
-    print("-"*70)
+    logger.info("-"*70)
+    logger.info("INTERPRETATION:")
+    logger.info("-"*70)
     silh_improvement = pinn_metrics["silhouette"] - std_metrics["silhouette"]
     db_improvement = std_metrics["davies_bouldin"] - pinn_metrics["davies_bouldin"]
     
-    print(f"Silhouette improvement: {silh_improvement:+.4f}")
-    print(f"Davies-Bouldin improvement: {db_improvement:+.4f}")
+    logger.info("Silhouette improvement: + %.4f", silh_improvement)
+    logger.info("Davies-Bouldin improvement: + %.4f", db_improvement)
     
     if silh_improvement > 0.05:
-        print("Physics-informed model shows BETTER cluster separation")
+        logger.info("Physics-informed model shows BETTER cluster separation")
     elif silh_improvement > 0:
-        print("Physics-informed model shows SLIGHT improvement in separation")
+        logger.info("Physics-informed model shows SLIGHT improvement in separation")
     else:
-        print("Models show similar separation quality")
+        logger.info("Models show similar separation quality")
     
     pinn_sep, types = compute_pairwise_separability(pinn_results, "Physics-Informed")
     std_sep, _ = compute_pairwise_separability(standard_results, "Standard")
@@ -217,15 +222,15 @@ def run_full_quantitative_analysis(pinn_results, standard_results, save_dir="res
     avg_pinn_sep = pinn_sep[np.triu_indices_from(pinn_sep, k=1)].mean()
     avg_std_sep = std_sep[np.triu_indices_from(std_sep, k=1)].mean()
     
-    print(f"\nAverage pairwise separation:")
-    print(f"  Physics-Informed: {avg_pinn_sep:.3f}")
-    print(f"  Standard:         {avg_std_sep:.3f}")
-    print(f"  Improvement:      {(avg_pinn_sep/avg_std_sep - 1)*100:+.1f}%")
+    logger.info("Average pairwise separation:")
+    logger.info("  Physics-Informed: %.3f", avg_pinn_sep)
+    logger.info("  Standard:         %.3f", avg_std_sep)
+    logger.info("  Improvement:      + %.1f%%", float(avg_pinn_sep/avg_std_sep - 1)*100)
     
     compute_physics_loss_reduction(pinn_results, standard_results)
     
     compare_classification_accuracy(pinn_results, standard_results)
     
-    print("\n" + "="*70)
-    print("ANALYSIS COMPLETE")
-    print("="*70 + "\n")
+    logger.info("="*70)
+    logger.info("ANALYSIS COMPLETE")
+    logger.info("="*70 )

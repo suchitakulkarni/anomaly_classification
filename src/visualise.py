@@ -1,4 +1,4 @@
-import os
+import os, sys, logging
 import numpy as np
 
 import torch
@@ -14,12 +14,12 @@ import seaborn as sns
 from src.test_suite_runner import aggregate_anomaly_metrics
 from src.test_suite_runner import aggregate_anomaly_metrics
 
-
+logger = logging.getLogger(__name__)
 
 def _get_full_reconstruction(reconstruction_windows, N_signal, window_size):
     """Helper to convert windowed reconstructions to a single signal."""
     N_windows = len(reconstruction_windows)
-    print(f"[DEBUG] _get_full_reconstruction called with N_windows={len(reconstruction_windows)}, N_signal={N_signal}, window_size={window_size}")
+    logger.debug(f"_get_full_reconstruction called with N_windows={len(reconstruction_windows)}, N_signal={N_signal}, window_size={window_size}")
     # Use the last point of each window and place it at the correct position
     reconstruction_full_pts = reconstruction_windows[:, window_size - 1, 0]
     
@@ -94,7 +94,7 @@ def plot_physics_comparison_results(x_anomalous, errors_pinn, errors_standard, t
     plt.tight_layout(rect=[0, 0.03, 1, 0.97])
     plt.savefig(filename)
     plt.close()
-    print(f"Plot saved to {filename}")
+    logger.info(f"Plot saved to {filename}")
 
 
 def plot_reconstruction_comparison(x_anomalous, recon_pinn_windows, recon_standard_windows, window_size, anomaly_idxs, filename="reconstruction_comparison.png"):
@@ -133,7 +133,7 @@ def plot_reconstruction_comparison(x_anomalous, recon_pinn_windows, recon_standa
     plt.tight_layout()
     plt.savefig(filename)
     plt.close()
-    print(f"Plot saved to {filename}")
+    logger.info(f"Plot saved to {filename}")
 
 
 def plot_history(history, save_path="results/loss_curves.png"):
@@ -337,7 +337,7 @@ def plot_detected_anomalies_comparison(x_anomalous, errors_pinn, errors_standard
     os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
     plt.savefig(filename, dpi=150)
     plt.close()
-    print(f"Plot saved to {filename}")
+    logger.info(f"Plot saved to {filename}")
 
 def analyze_phase_shift(model, test_loader, window_size, device, model_name="Model"):
     """
@@ -373,10 +373,10 @@ def analyze_phase_shift(model, test_loader, window_size, device, model_name="Mod
     std_lag = np.std(all_lags)
     avg_corr = np.mean(all_correlations)
     
-    print(f"\n{model_name} Phase Shift Analysis:")
-    print(f"  Average lag: {avg_lag:.2f} timesteps (std: {std_lag:.2f})")
-    print(f"  Average correlation: {avg_corr:.4f}")
-    print(f"  Lag distribution: min={np.min(all_lags)}, max={np.max(all_lags)}, median={np.median(all_lags)}")
+    logger.info("%s Phase Shift Analysis:", model_name)
+    logger.info("  Average lag: %0.2f  timesteps (std:  %0.2f)", avg_lag, std_lag)
+    logger.info("  Average correlation: 0.4f", avg_corr)
+    logger.info("  Lag distribution: min=%s, max=%s, median=%s", np.min(all_lags),np.max(all_lags), np.median(all_lags))
     
     return {
         'avg_lag': avg_lag,
@@ -452,7 +452,7 @@ def plot_phase_shift_analysis(x_anomalous, recon_pinn_windows, recon_standard_wi
     os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
     plt.savefig(filename, dpi=150)
     plt.close()
-    print(f"Phase shift analysis plot saved to {filename}")
+    logger.info(f"Phase shift analysis plot saved to {filename}")
 
 def inject_physics_violating_perturbations(x, num_anomalies=10, duration=5, omega=2.0, dt=0.01):
         """
@@ -543,7 +543,7 @@ def plot_physics_violation_types(x_clean, x_anomalous, anomaly_dict, window_size
     plt.tight_layout()
     plt.savefig(filename, dpi=150)
     plt.close()
-    print(f"Physics violation plot saved to {filename}")
+    logger.info(f"Physics violation plot saved to {filename}")
 
 def plot_overfitting_analysis(history, physics_weight, 
                                filename="results/overfitting_analysis.png"):
@@ -620,7 +620,7 @@ def plot_overfitting_analysis(history, physics_weight,
     plt.tight_layout()
     plt.savefig(filename, dpi=150)
     plt.close()
-    print(f"Overfitting analysis saved to {filename}")
+    logger.info(f"Overfitting analysis saved to {filename}")
 
 
 def plot_generalization_metrics(history_pinn, history_standard, 
@@ -669,7 +669,7 @@ def plot_generalization_metrics(history_pinn, history_standard,
     plt.tight_layout()
     plt.savefig(filename, dpi=150)
     plt.close()
-    print(f"Generalization comparison saved to {filename}")
+    logger.info(f"Generalization comparison saved to {filename}")
 
 def plot_mse_phy_heatmap(mse_list, phy_loss_list, bins=50, log_scale=False, save_path="results/mse_phy_heatmap.png"):
     """
@@ -776,7 +776,7 @@ def plot_loss_distributions(pinn_results, standard_results, save_dir="results"):
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "loss_distributions_boxplot.png"), dpi=300)
     plt.close()
-    print(f"Saved: loss_distributions_boxplot.png")
+    logger.info(f"Saved: loss_distributions_boxplot.png")
 
 
 
@@ -849,7 +849,7 @@ def plot_2d_scatter_by_anomaly_type(pinn_results, standard_results,
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "2d_scatter_comparison.png"), dpi=300)
     plt.close()
-    print(f"Saved: 2d_scatter_comparison.png")
+    logger.info(f"Saved: 2d_scatter_comparison.png")
 
 
 def plot_anomaly_type_heatmaps(results, model_name, save_dir="results"):
@@ -890,7 +890,7 @@ def plot_anomaly_type_heatmaps(results, model_name, save_dir="results"):
     plt.savefig(os.path.join(save_dir, f"heatmaps_{model_name.lower().replace(' ', '_')}.png"), 
                 dpi=300)
     plt.close()
-    print(f"Saved: heatmaps_{model_name.lower().replace(' ', '_')}.png")
+    logger.info(f"Saved: heatmaps_{model_name.lower().replace(' ', '_')}.png")
 
 
 def plot_reconstruction_grid(results, x_clean, save_dir="results", max_examples=3):
@@ -930,7 +930,7 @@ def plot_reconstruction_grid(results, x_clean, save_dir="results", max_examples=
                             f"reconstruction_grid_{result.model_name.lower().replace(' ', '_')}.png"), 
                 dpi=300)
     plt.close()
-    print(f"Saved: reconstruction_grid_{result.model_name.lower().replace(' ', '_')}.png")
+    logger.info(f"Saved: reconstruction_grid_{result.model_name.lower().replace(' ', '_')}.png")
 
 def plot_reconstruction_overlay(results_standard, results_pinn, x_clean, save_dir="results", max_examples=3):
     """
@@ -981,7 +981,7 @@ def plot_reconstruction_overlay(results_standard, results_pinn, x_clean, save_di
                                 f"reconstruction_grid_overlay_samples_%s.png" %(max_examples)), 
                     dpi=300)
     plt.close()
-    print(f"Saved: reconstruction_grid_overlay.png")
+    logger.info(f"Saved: reconstruction_grid_overlay.png")
 
 
 
@@ -1030,14 +1030,14 @@ def plot_aggregated_metrics_comparison(pinn_agg, standard_agg, save_dir="results
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "aggregated_metrics_comparison.png"), dpi=300)
     plt.close()
-    print(f"Saved: aggregated_metrics_comparison.png")
+    logger.info(f"Saved: aggregated_metrics_comparison.png")
 
 
 def create_comprehensive_report(pinn_results, standard_results, x_clean, save_dir="results"):
     """
     Generates all visualization plots for the test suite.
     """
-    print("\n=== Generating Comprehensive Test Suite Report ===")
+    logger.info("=== Generating Comprehensive Test Suite Report ===")
     
     plot_2d_scatter_by_anomaly_type(pinn_results, standard_results, save_dir)
     
@@ -1057,4 +1057,4 @@ def create_comprehensive_report(pinn_results, standard_results, x_clean, save_di
     
     plot_aggregated_metrics_comparison(pinn_agg, standard_agg, save_dir)
     
-    print("=== Report Generation Complete ===\n")
+    logger.info("=== Report Generation Complete ===\n")
