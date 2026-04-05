@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 import numpy as np
-import os
+import os, sys,logging
 from torch.utils.data import DataLoader, TensorDataset
 
-from src.config_large_window import Config
+from src.utils import setup_logging
+from src.config import Config
 from src.model import LSTMAutoencoder
 from src.train import train_model_with_validation
 from src.dataset import simulate_harmonic_oscillator, prepare_data
@@ -14,6 +15,8 @@ from src.visualise import create_comprehensive_report
 from src.quantitative_metrics import run_full_quantitative_analysis
 from torch.serialization import add_safe_globals
 from sklearn.preprocessing import StandardScaler
+
+logger = logging.getLogger(__name__)
 
 def load_model(checkpoint_path, device):
 
@@ -46,7 +49,7 @@ def train_both_models(config, train_loader, val_loader, device, scaler):
     Returns:
         Tuple of (model_pinn, model_standard)
     """
-    print("\n=== Training Physics-Informed Model ===")
+    logger.info("=== Training Physics-Informed Model ===")
     set_all_seeds(config.RANDOM_STATE)
     
     model_pinn = LSTMAutoencoder(
@@ -71,9 +74,9 @@ def train_both_models(config, train_loader, val_loader, device, scaler):
         stop_early=True
     )
     
-    print(f"Physics-Informed trained. Best epoch: {best_epoch_pinn}")
+    logger.info(f"Physics-Informed trained. Best epoch: {best_epoch_pinn}")
     
-    print("\n=== Training Standard Model ===")
+    logger.info("=== Training Standard Model ===")
     set_all_seeds(config.RANDOM_STATE)
     
     model_standard = LSTMAutoencoder(
@@ -98,7 +101,7 @@ def train_both_models(config, train_loader, val_loader, device, scaler):
         stop_early=True
     )
     
-    print(f"Standard trained. Best epoch: {best_epoch_standard}")
+    logger.info(f"Standard trained. Best epoch: {best_epoch_standard}")
 
     model_dir = os.path.join(config.RESULTS_DIR, "saved_models")
     os.makedirs(model_dir, exist_ok=True)
@@ -116,7 +119,7 @@ def train_both_models(config, train_loader, val_loader, device, scaler):
         }
     }, save_path)
 
-    print(f"Saved model checkpoint to {save_path}")
+    logger.info(f"Saved model checkpoint to {save_path}")
 
     save_path = os.path.join(model_dir, f"lstm_autoencoder_pinn.pt")
 
@@ -132,7 +135,7 @@ def train_both_models(config, train_loader, val_loader, device, scaler):
         }
     }, save_path)
 
-    print(f"Saved model checkpoint to {save_path}")
+    logger.info(f"Saved model checkpoint to {save_path}")
     
     return model_pinn, model_standard
 
@@ -143,12 +146,12 @@ def run_full_test_suite(config: Config, train_again = False):
     """
     set_all_seeds(config.RANDOM_STATE)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    logger.info(f"Using device: %s", device)
     
     g = torch.Generator()
     g.manual_seed(config.RANDOM_STATE)
     if config.SINGLE_FREQUENCY:
-        print("\n=== 1. Generating Clean Training Data ===")
+        logger.info("=== 1. Generating Clean Training Data ===")
         x_clean_full = simulate_harmonic_oscillator(
             timesteps=config.TIMESTEPS,
             dt=config.DT,
@@ -178,7 +181,7 @@ def run_full_test_suite(config: Config, train_again = False):
     x_train_raw = x_clean_full[:train_size]
     x_val_raw = x_clean_full[train_size:]
     
-    print(f"Train size: {len(x_train_raw)}, Val size: {len(x_val_raw)}")
+    logger.info(f"Train size: {len(x_train_raw)}, Val size: {len(x_val_raw)}")
     
     X_train_np, scaler, _ = prepare_data(x_train_raw, config.WINDOW_SIZE)
     X_train_tensor = torch.from_numpy(X_train_np).float().to(device)
@@ -204,7 +207,7 @@ def run_full_test_suite(config: Config, train_again = False):
         worker_init_fn=seed_worker
     )
     if train_again:
-        print("\n=== 2. Training Both Models ===")
+        logger.info("=== 2. Training Both Models ===")
         model_pinn, model_standard = train_both_models(
             config, train_loader, val_loader, device, scaler
         )
@@ -213,7 +216,7 @@ def run_full_test_suite(config: Config, train_again = False):
         model_standard, scaler, cfg = load_model(os.path.join(model_dir, "lstm_autoencoder_standard.pt"), device)
         model_pinn, scaler, cfg = load_model(os.path.join(model_dir, "lstm_autoencoder_pinn.pt"), device)
     
-    print("\n=== 3. Generating Test Baseline Signal ===")
+    logger.info("=== 3. Generating Test Baseline Signal ===")
     x_test_baseline = simulate_harmonic_oscillator(
         timesteps=config.TIMESTEPS,
         dt=config.DT,
@@ -224,7 +227,7 @@ def run_full_test_suite(config: Config, train_again = False):
         phase=0.5
     )
     
-    print("\n=== 4. Running Comprehensive Anomaly Test Suite ===")
+    logger.info("=== 4. Running Comprehensive Anomaly Test Suite ===")
     pinn_results, standard_results = compare_models_on_anomalies(
         config=config,
         model_pinn=model_pinn,
@@ -236,7 +239,7 @@ def run_full_test_suite(config: Config, train_again = False):
         dt=config.DT
     )
     
-    print("\n=== 5. Generating Visualizations ===")
+    logger.info("=== 5. Generating Visualizations ===")
     create_comprehensive_report(
         pinn_results=pinn_results,
         standard_results=standard_results,
@@ -244,7 +247,7 @@ def run_full_test_suite(config: Config, train_again = False):
         save_dir=config.RESULTS_DIR
     )
     
-    print("\n=== 6. Quantitative Analysis ===")
+    logger.info("=== 6. Quantitative Analysis ===")
     
     run_full_quantitative_analysis(
         pinn_results=pinn_results,
@@ -252,16 +255,17 @@ def run_full_test_suite(config: Config, train_again = False):
         save_dir=config.RESULTS_DIR
     )
     
-    print("\n=== Test Suite Complete ===")
-    print(f"All results saved to: {config.RESULTS_DIR}")
+    logger.info("=== Test Suite Complete ===")
+    logger.info(f"All results saved to: {config.RESULTS_DIR}")
 
 
 if __name__ == "__main__":
+    setup_logging(level=logging.INFO)
     app_config = Config()
     set_all_seeds(app_config.RANDOM_STATE)
     
-    print("\n" + "="*60)
-    print("COMPREHENSIVE ANOMALY DETECTION TEST SUITE")
-    print("="*60)
+    logger.info("="*60)
+    logger.info("COMPREHENSIVE ANOMALY DETECTION TEST SUITE")
+    logger.info("="*60)
     
-    run_full_test_suite(app_config, train_again = False)
+    run_full_test_suite(app_config, train_again = True)
