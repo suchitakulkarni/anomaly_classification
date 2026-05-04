@@ -12,6 +12,7 @@ class AnomalyTestResult:
     anomaly_type: str
     x_anomalous: np.ndarray
     anomaly_indices: np.ndarray
+    anomaly_duration: int          # signal-timestep length of the injected event
     mse_values: np.ndarray
     physics_values: np.ndarray
     reconstruction: np.ndarray
@@ -53,54 +54,58 @@ def run_anomaly_test_suite(config, model, x_clean, scaler, device,
     
     results = {}
     
+    # 4-tuples: (anomaly_type, inject_fn, kwargs, duration_timesteps)
+    # duration_timesteps is the ground-truth event length stored in AnomalyTestResult
+    # and used only for post-hoc evaluation (never seen by the model).
+    # dc_offset_shifts picks a random duration internally (randint(30,100)); 50 is the midpoint.
     anomaly_configs = [
-        ("baseline", simulate_harmonic_oscillator, {'dt':0.01, 'omega':2.0}), ###### BE VERY VERY VERY VERY careful with this, these must be same as defaults of the signal generating function
+        ("baseline", simulate_harmonic_oscillator, {'dt':0.01, 'omega':2.0}, 0), ###### BE VERY VERY VERY VERY careful with this, these must be same as defaults of the signal generating function
 
-        ("amplitude_spikes", inject_amplitude_spikes, 
-         {"num_anomalies": 5, "severity": 5.0, "seed": config.RANDOM_STATE}),
-        
-        ("frequency_violations", inject_frequency_violations, 
-         {"num_anomalies": 5, "duration": 20, "omega_base": omega, 
-          "dt": dt, "seed": config.RANDOM_STATE + 1}),
-        
-        ("phase_discontinuities", inject_phase_discontinuities, 
-         {"num_anomalies": 5, "phase_shift_range": (np.pi/4, np.pi), 
-          "seed": config.RANDOM_STATE + 2}),
-        
-        ("damping_violations", inject_damping_violations, 
-         {"num_anomalies": 5, "duration": 30, "damping_factor": 0.95, 
-          "dt": dt, "seed": config.RANDOM_STATE + 3}),
-        
-        ("missing_data", inject_missing_data, 
-         {"num_anomalies": 5, "gap_duration": 15, "seed": config.RANDOM_STATE + 4}),
-        
-        ("white_noise_bursts", inject_white_noise_bursts, 
-         {"num_anomalies": 5, "duration": 20, "noise_amplitude": 1.0, 
-          "seed": config.RANDOM_STATE + 5}),
-        
-        ("harmonic_contamination", inject_harmonic_contamination, 
-         {"num_anomalies": 5, "duration": 30, "omega_base": omega, 
-          "harmonic_order": 2, "dt": dt, "seed": config.RANDOM_STATE + 6}),
-        
-        ("dc_offset_shifts", inject_dc_offset_shifts, 
-         {"num_anomalies": 5, "offset_range": (-1.5, 1.5), 
-          "seed": config.RANDOM_STATE + 7}),
-        
-        ("amplitude_modulation", inject_amplitude_modulation, 
-         {"num_anomalies": 5, "duration": 40, "mod_freq": 0.5, 
-          "dt": dt, "seed": config.RANDOM_STATE + 8}),
+        ("amplitude_spikes", inject_amplitude_spikes,
+         {"num_anomalies": 1, "severity": 5.0, "seed": config.RANDOM_STATE}, 1),
+
+        ("frequency_violations", inject_frequency_violations,
+         {"num_anomalies": 1, "duration": 20, "omega_base": omega,
+          "dt": dt, "seed": config.RANDOM_STATE + 1}, 20),
+
+        ("phase_discontinuities", inject_phase_discontinuities,
+         {"num_anomalies": 1, "phase_shift_range": (np.pi/4, np.pi),
+          "seed": config.RANDOM_STATE + 2}, 1),
+
+        ("damping_violations", inject_damping_violations,
+         {"num_anomalies": 1, "duration": 30, "damping_factor": 0.95,
+          "dt": dt, "seed": config.RANDOM_STATE + 3}, 30),
+
+        ("missing_data", inject_missing_data,
+         {"num_anomalies": 1, "gap_duration": 15, "seed": config.RANDOM_STATE + 4}, 15),
+
+        ("white_noise_bursts", inject_white_noise_bursts,
+         {"num_anomalies": 1, "duration": 20, "noise_amplitude": 1.0,
+          "seed": config.RANDOM_STATE + 5}, 20),
+
+        ("harmonic_contamination", inject_harmonic_contamination,
+         {"num_anomalies": 1, "duration": 30, "omega_base": omega,
+          "harmonic_order": 2, "dt": dt, "seed": config.RANDOM_STATE + 6}, 30),
+
+        ("dc_offset_shifts", inject_dc_offset_shifts,
+         {"num_anomalies": 1, "offset_range": (-1.5, 1.5),
+          "seed": config.RANDOM_STATE + 7}, 50),
+
+        ("amplitude_modulation", inject_amplitude_modulation,
+         {"num_anomalies": 1, "duration": 40, "mod_freq": 0.5,
+          "dt": dt, "seed": config.RANDOM_STATE + 8}, 40),
     ]
     
     logger.info(f"=== Running Anomaly Test Suite for {model_name} ===")
     
-    for anomaly_type, inject_fn, kwargs in anomaly_configs:
+    for anomaly_type, inject_fn, kwargs, duration in anomaly_configs:
         logger.info("Testing: %s...", anomaly_type)
         if anomaly_type == 'baseline':
             x_anom = inject_fn(**kwargs)
             anom_idxs = [0]
         else:
             x_anom, anom_idxs = inject_fn(x_clean, **kwargs)
-        
+
         recon, mse_vals, phy_vals = reconstruct_signal(
             model,
             x_scaled=x_anom,
@@ -111,11 +116,12 @@ def run_anomaly_test_suite(config, model, x_clean, scaler, device,
             dt=dt,
             physics_loss_fn=calculate_physics_loss
         )
-        
+
         results[anomaly_type] = AnomalyTestResult(
             anomaly_type=anomaly_type,
             x_anomalous=x_anom,
             anomaly_indices=anom_idxs,
+            anomaly_duration=duration,
             mse_values=mse_vals,
             physics_values=phy_vals,
             reconstruction=recon,

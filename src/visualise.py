@@ -1033,6 +1033,437 @@ def plot_aggregated_metrics_comparison(pinn_agg, standard_agg, save_dir="results
     logger.info(f"Saved: aggregated_metrics_comparison.png")
 
 
+def plot_2d_scatter_with_threshold(pinn_results, std_results, threshold_bundle_pinn,
+                                    threshold_bundle_std, save_dir="results", window_size=30):
+    """
+    2D scatter (log MSE × log physics loss) with Mahalanobis ellipses (1σ/2σ/3σ)
+    and radial classification zone boundaries.  Only anomalous windows (those that
+    overlap the injected event) are plotted; clean windows are omitted to avoid
+    diluting the per-type signal.
+    """
+    from src.detection_metrics import windows_from_indices
+    os.makedirs(save_dir, exist_ok=True)
+
+    colors = {
+        'amplitude_spikes': '#e74c3c',
+        'frequency_violations': '#f39c12',
+        'phase_discontinuities': '#2ecc71',
+        'damping_violations': '#9b59b6',
+        'missing_data': '#95a5a6',
+        'white_noise_bursts': '#ecf0f1',
+        'harmonic_contamination': '#e91e63',
+        'dc_offset_shifts': '#00bcd4',
+        'amplitude_modulation': '#ffeb3b',
+        'baseline': 'silver',
+    }
+    labels_map = {
+        'baseline': 'No anomalies',
+        'amplitude_spikes': 'Amplitude Spike',
+        'frequency_violations': 'Frequency Violation',
+        'phase_discontinuities': 'Phase Jump',
+        'damping_violations': 'Damping Violation',
+        'missing_data': 'Missing Data',
+        'white_noise_bursts': 'White Noise',
+        'harmonic_contamination': 'Harmonic Contamination',
+        'dc_offset_shifts': 'DC Offset',
+        'amplitude_modulation': 'Amplitude Modulation',
+    }
+
+    fig, axes = plt.subplots(1, 2, figsize=(18, 7))
+
+    for ax_idx, (results, bundle, title) in enumerate([
+        (pinn_results, threshold_bundle_pinn, "Physics-Informed"),
+        (std_results, threshold_bundle_std, "Standard"),
+    ]):
+        ax = axes[ax_idx]
+
+        for anom_type, result in results.items():
+            if anom_type == 'baseline':
+                continue
+            total_windows = len(result.mse_values)
+            anom_mask = windows_from_indices(
+                result.anomaly_indices, result.anomaly_duration, window_size, total_windows,
+            )
+            mse_plot = result.mse_values[anom_mask]
+            phy_plot = result.physics_values[anom_mask]
+            if len(mse_plot) == 0:
+                continue
+            ax.scatter(
+                mse_plot, phy_plot,
+                label=labels_map.get(anom_type, anom_type),
+                c=colors.get(anom_type, 'gray'),
+                alpha=0.6, s=30, edgecolors='black', linewidth=0.3,
+            )
+
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+
+        mean = bundle["mean"]   # [log10_mse, log10_phys]
+
+        # Ray length spans from center to anomalous data edge in log10 space
+        anom_mse_parts, anom_phy_parts = [], []
+        for at, r in results.items():
+            if at == 'baseline':
+                continue
+            mask = windows_from_indices(r.anomaly_indices, r.anomaly_duration,
+                                        window_size, len(r.mse_values))
+            if mask.any():
+                anom_mse_parts.append(r.mse_values[mask])
+                anom_phy_parts.append(r.physics_values[mask])
+        all_mse = np.concatenate(anom_mse_parts) if anom_mse_parts else np.array([10 ** mean[0]])
+        all_phy = np.concatenate(anom_phy_parts) if anom_phy_parts else np.array([10 ** mean[1]])
+        log_mse_vals = np.log10(np.maximum(all_mse, 1e-10))
+        log_phy_vals = np.log10(np.maximum(all_phy, 1e-10))
+        ray_length = max(
+            log_mse_vals.max() - mean[0],
+            log_phy_vals.max() - mean[1],
+            2.0,
+        )
+
+        # Boundary lines at 20° and 70°
+        '''for angle_deg in [20.0, 70.0]:
+            rad = np.radians(angle_deg)
+            end_log = mean + ray_length * np.array([np.cos(rad), np.sin(rad)])
+            ax.plot(
+                [10 ** mean[0], 10 ** end_log[0]],
+                [10 ** mean[1], 10 ** end_log[1]],
+                '--', color='#555555', linewidth=1.5, alpha=0.75, zorder=4,
+                label=f'{angle_deg:.0f}° boundary' if ax_idx == 0 else '_nolegend_',
+            )'''
+
+        # Zone labels placed at midpoint angles of each sector
+        zone_mid_angles = [0.0, 45.0, 90.0]
+        zone_names = ['amplitude_spike\n/missing_data', 'white_noise\n/severe',
+                      'freq/phase\n/harmonic/dc']
+        zone_text_colors = ['#c0392b', '#784212', '#1a5276']
+        label_dist = ray_length * 0.55
+        for mid_ang, zone_name, zone_color in zip(zone_mid_angles, zone_names, zone_text_colors):
+            rad = np.radians(mid_ang)
+            lx = 10 ** (mean[0] + label_dist * np.cos(rad))
+            ly = 10 ** (mean[1] + label_dist * np.sin(rad))
+            ax.text(
+                lx, ly, zone_name, fontsize=7, color=zone_color,
+                ha='center', va='center', zorder=6,
+                bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.6),
+            )
+
+        ax.set_xlabel("MSE", fontsize=12)
+        ax.set_ylabel("Physics Loss", fontsize=12)
+        ax.set_title(f"{title} — Mahalanobis ellipses & classification zones",
+                     fontsize=12, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        if ax_idx == 0:
+            ax.legend(loc='best', fontsize=7, ncol=2)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "2d_scatter_with_threshold.png"), dpi=300)
+    plt.close()
+    logger.info("Saved: 2d_scatter_with_threshold.png")
+
+
+def plot_roc_curves(eval_df, save_dir="results",
+                    pinn_results=None, std_results=None,
+                    threshold_bundle_pinn=None, threshold_bundle_std=None,
+                    config=None):
+    """
+    One subplot per anomaly type with PINN and Standard ROC curves.
+
+    When pinn_results / std_results / threshold bundles / config are supplied,
+    actual ROC curves (FPR vs TPR) are drawn. Otherwise falls back to an AUC
+    bar chart derived from eval_df.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    anomaly_types = sorted(eval_df['anomaly_type'].unique())
+    n_types = len(anomaly_types)
+    n_cols = min(3, n_types)
+    n_rows = (n_types + n_cols - 1) // n_cols
+
+    has_raw = all(x is not None for x in [
+        pinn_results, std_results, threshold_bundle_pinn, threshold_bundle_std, config
+    ])
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows), squeeze=False)
+    axes_flat = axes.flatten()
+
+    for i, anom_type in enumerate(anomaly_types):
+        ax = axes_flat[i]
+
+        pinn_rows = eval_df[(eval_df['model'] == 'physics_informed') &
+                             (eval_df['anomaly_type'] == anom_type)]
+        std_rows = eval_df[(eval_df['model'] == 'standard') &
+                            (eval_df['anomaly_type'] == anom_type)]
+
+        pinn_auc = float(pinn_rows['auc'].values[0]) if len(pinn_rows) else float('nan')
+        std_auc = float(std_rows['auc'].values[0]) if len(std_rows) else float('nan')
+
+        if has_raw:
+            from src.detection_metrics import compute_roc_auc, windows_from_indices
+            from src.threshold import detect
+
+            for results, bundle, color, name, auc_val in [
+                (pinn_results, threshold_bundle_pinn, '#2ecc71', 'Physics-Informed', pinn_auc),
+                (std_results, threshold_bundle_std, '#e74c3c', 'Standard', std_auc),
+            ]:
+                if anom_type not in results:
+                    continue
+                result = results[anom_type]
+                total_windows = len(result.mse_values)
+                true_mask = windows_from_indices(
+                    result.anomaly_indices, result.anomaly_duration,
+                    config.WINDOW_SIZE, total_windows,
+                )
+                _, score_array = detect(result.mse_values, result.physics_values, bundle)
+                fpr, tpr, _ = compute_roc_auc(score_array, true_mask)
+                if fpr is not None:
+                    lbl = f'{name} (AUC={auc_val:.3f})' if not np.isnan(auc_val) else name
+                    ax.plot(fpr, tpr, color=color, linewidth=2, label=lbl)
+
+            ax.plot([0, 1], [0, 1], 'k--', linewidth=1, alpha=0.5)
+            ax.set_xlabel("FPR")
+            ax.set_ylabel("TPR")
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+        else:
+            aucs = [pinn_auc, std_auc]
+            bars = ax.bar(['Physics-Informed', 'Standard'], aucs,
+                           color=['#2ecc71', '#e74c3c'], alpha=0.8)
+            for bar, val in zip(bars, aucs):
+                if not np.isnan(val):
+                    ax.text(bar.get_x() + bar.get_width() / 2, val + 0.01,
+                            f'{val:.3f}', ha='center', va='bottom', fontsize=9)
+            ax.set_ylim(0, 1)
+            ax.set_ylabel("AUC")
+            ax.axhline(0.5, color='k', linestyle='--', alpha=0.5, label='random')
+
+        pinn_str = f'{pinn_auc:.3f}' if not np.isnan(pinn_auc) else 'N/A'
+        std_str = f'{std_auc:.3f}' if not np.isnan(std_auc) else 'N/A'
+        ax.set_title(
+            f"{anom_type.replace('_', ' ').title()}\n"
+            f"PINN AUC={pinn_str}  Std AUC={std_str}",
+            fontsize=9, fontweight='bold',
+        )
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+
+    for j in range(n_types, len(axes_flat)):
+        axes_flat[j].axis('off')
+
+    plt.suptitle("ROC Curves — PINN vs Standard (per anomaly type)",
+                 fontsize=14, fontweight='bold', y=1.01)
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "roc_curves.png"), dpi=300, bbox_inches='tight')
+    plt.close()
+    logger.info("Saved: roc_curves.png")
+
+
+def plot_confusion_matrix(classifications, true_labels, save_dir="results"):
+    """
+    Seaborn confusion matrix heatmap normalized by row.
+
+    classifications : list of predicted labels from classify_flagged_window
+    true_labels     : list of true anomaly type strings (ground truth)
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    all_labels = sorted(set(true_labels) | set(classifications))
+    cm = confusion_matrix(true_labels, classifications, labels=all_labels)
+
+    # Normalize by row (true class totals)
+    row_sums = cm.sum(axis=1, keepdims=True)
+    cm_norm = np.where(row_sums > 0, cm / row_sums, 0.0)
+
+    fig, ax = plt.subplots(figsize=(max(8, len(all_labels)), max(6, len(all_labels))))
+    sns.heatmap(
+        cm_norm,
+        annot=True, fmt='.2f',
+        xticklabels=all_labels, yticklabels=all_labels,
+        cmap='Blues', vmin=0, vmax=1, ax=ax,
+        linewidths=0.5,
+    )
+    ax.set_xlabel("Predicted label", fontsize=12)
+    ax.set_ylabel("True label", fontsize=12)
+    ax.set_title("Classification Confusion Matrix (row-normalized)", fontsize=13, fontweight='bold')
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "confusion_matrix.png"), dpi=300)
+    plt.close()
+    logger.info("Saved: confusion_matrix.png")
+
+
+def plot_macro_class_confusion(knn_data, save_dir="results"):
+    """
+    Side-by-side KNN confusion matrices (row-normalised) for PINN vs Standard,
+    using the physics-motivated macro-class grouping.
+    """
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.model_selection import cross_val_predict
+    from sklearn.metrics import confusion_matrix
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    macro_order = knn_data['macro_order']
+    labels = [m.replace('_', '\n') for m in macro_order]
+
+    knn = KNeighborsClassifier(n_neighbors=5)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    pairs = [
+        ('Physics-Informed', knn_data['X_pinn'], knn_data['y_pinn_macro']),
+        ('Standard',         knn_data['X_std'],  knn_data['y_std_macro']),
+    ]
+
+    for ax, (title, X, y) in zip(axes, pairs):
+        y_pred = cross_val_predict(knn, X, y, cv=5)
+        cm = confusion_matrix(y, y_pred, labels=list(range(len(macro_order))))
+        row_sums = cm.sum(axis=1, keepdims=True)
+        cm_norm = np.where(row_sums > 0, cm / row_sums, 0.0)
+        acc = (y == y_pred).mean()
+
+        sns.heatmap(
+            cm_norm, annot=True, fmt='.2f', cmap='Blues',
+            vmin=0, vmax=1, ax=ax, linewidths=0.5,
+            xticklabels=labels, yticklabels=labels,
+        )
+        ax.set_title(f"{title}  (KNN accuracy={acc:.2f})", fontsize=12, fontweight='bold')
+        ax.set_xlabel("Predicted macro-class", fontsize=11)
+        ax.set_ylabel("True macro-class", fontsize=11)
+        plt.setp(ax.get_xticklabels(), rotation=30, ha='right')
+        plt.setp(ax.get_yticklabels(), rotation=0)
+
+    fig.suptitle(
+        "Macro-class KNN Confusion Matrices (row-normalised)\n"
+        "normal | mse_dominant | physics_dominant | both_fail | subtle",
+        fontsize=13, fontweight='bold',
+    )
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "macro_class_confusion.png"), dpi=300)
+    plt.close()
+    logger.info("Saved: macro_class_confusion.png")
+
+
+def plot_micro_class_confusion(knn_data, save_dir="results"):
+    """
+    Side-by-side KNN confusion matrices (row-normalised) for PINN vs Standard,
+    one row/column per anomaly type (9 micro-classes).
+    """
+    from sklearn.neighbors import KNeighborsClassifier
+    from sklearn.model_selection import cross_val_predict
+    from sklearn.metrics import confusion_matrix
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    micro_order = knn_data['micro_order']
+    labels = [m.replace('_', '\n') for m in micro_order]
+    n_classes = len(micro_order)
+
+    knn = KNeighborsClassifier(n_neighbors=5)
+
+    fig, axes = plt.subplots(1, 2, figsize=(20, 10))
+    pairs = [
+        ('Physics-Informed', knn_data['X_pinn'], knn_data['y_pinn_micro']),
+        ('Standard',         knn_data['X_std'],  knn_data['y_std_micro']),
+    ]
+
+    for ax, (title, X, y) in zip(axes, pairs):
+        n_splits = max(2, min(5, int(np.bincount(y).min())))
+        y_pred = cross_val_predict(knn, X, y, cv=n_splits)
+        cm = confusion_matrix(y, y_pred, labels=list(range(n_classes)))
+        row_sums = cm.sum(axis=1, keepdims=True)
+        cm_norm = np.where(row_sums > 0, cm / row_sums, 0.0)
+        acc = (y == y_pred).mean()
+
+        sns.heatmap(
+            cm_norm, annot=True, fmt='.2f', cmap='Blues',
+            vmin=0, vmax=1, ax=ax, linewidths=0.5,
+            xticklabels=labels, yticklabels=labels,
+        )
+        ax.set_title(f"{title}  (KNN accuracy={acc:.2f})", fontsize=12, fontweight='bold')
+        ax.set_xlabel("Predicted anomaly type", fontsize=11)
+        ax.set_ylabel("True anomaly type", fontsize=11)
+        plt.setp(ax.get_xticklabels(), rotation=35, ha='right')
+        plt.setp(ax.get_yticklabels(), rotation=0)
+
+    fig.suptitle(
+        "Micro-class KNN Confusion Matrices (row-normalised) — all 9 anomaly types",
+        fontsize=13, fontweight='bold',
+    )
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "micro_class_confusion.png"), dpi=300)
+    plt.close()
+    logger.info("Saved: micro_class_confusion.png")
+
+
+def plot_e2e_confusion(e2e_data, save_dir="results"):
+    """
+    Side-by-side non-square confusion matrices for the end-to-end pipeline:
+      rows  = 9 true anomaly types
+      cols  = predicted labels from classify_flagged_window  (+  "normal" for misses)
+
+    Row-normalised so each row sums to 1.  The "normal" column shows the missed-
+    detection rate; the other columns show the angle-classifier's grouping accuracy.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    all_preds = set()
+    for data in e2e_data.values():
+        all_preds.update(data["pred_labels"])
+    PRED_ORDER = ["normal"] + sorted(p for p in all_preds if p != "normal")
+
+    fig, axes = plt.subplots(1, 2, figsize=(18, 8))
+
+    for ax, (model_tag, data) in zip(axes, e2e_data.items()):
+        true_labels = data["true_labels"]
+        pred_labels = data["pred_labels"]
+
+        true_order = sorted(set(true_labels))
+        pred_order = [p for p in PRED_ORDER if p in set(pred_labels)]
+
+        true_idx = {l: i for i, l in enumerate(true_order)}
+        pred_idx = {l: i for i, l in enumerate(pred_order)}
+
+        cm = np.zeros((len(true_order), len(pred_order)))
+        for t, p in zip(true_labels, pred_labels):
+            if p in pred_idx:
+                cm[true_idx[t], pred_idx[p]] += 1
+
+        row_sums = cm.sum(axis=1, keepdims=True)
+        cm_norm = np.where(row_sums > 0, cm / row_sums, 0.0)
+
+        row_labels = [l.replace("_", "\n") for l in true_order]
+        col_labels = [p.replace("/", "/\n") for p in pred_order]
+
+        detected = sum(p != "normal" for p in pred_labels)
+        total = len(pred_labels)
+        acc = detected / total if total else 0.0
+
+        sns.heatmap(
+            cm_norm, annot=True, fmt=".2f", cmap="Blues",
+            vmin=0, vmax=1, ax=ax, linewidths=0.5,
+            xticklabels=col_labels, yticklabels=row_labels,
+        )
+        title = model_tag.replace("_", " ").title()
+        ax.set_title(
+            f"{title}  (detection rate={acc:.2f})",
+            fontsize=12, fontweight="bold",
+        )
+        ax.set_xlabel("Predicted label (angle classifier)", fontsize=11)
+        ax.set_ylabel("True anomaly type", fontsize=11)
+        plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
+        plt.setp(ax.get_yticklabels(), rotation=0)
+
+    fig.suptitle(
+        "End-to-end pipeline: detect → classify\n"
+        "'normal' column = missed detections; other columns = angle-classifier output",
+        fontsize=13, fontweight="bold",
+    )
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "e2e_confusion.png"), dpi=300)
+    plt.close()
+    logger.info("Saved: e2e_confusion.png")
+
+
 def create_comprehensive_report(pinn_results, standard_results, x_clean, save_dir="results"):
     """
     Generates all visualization plots for the test suite.

@@ -11,7 +11,7 @@ class Config:
     TIMESTEPS = 1000          
     DT = 0.01                 
     OMEGA = 2.0               # Oscillation frequency
-    NUM_ANOMALIES = 30        # Number of anomalies original 20
+    NUM_ANOMALIES = 1        # Number of anomalies original 20
     SEVERITY = 2              # Perturbation strength original 0.5
     NOISE = 0.1
     SINGLE_FREQUENCY = True
