@@ -28,14 +28,13 @@ The system runs a two-stage pipeline on each test signal:
 
 **Stage 1 — Unsupervised anomaly detection**
 
-A 2D Gaussian is fitted to the (log MSE, log physics loss) pairs of clean validation windows.
-Each incoming window is scored by its Mahalanobis distance from this normal cluster.
 A window is flagged as anomalous when its distance exceeds the 99th-percentile threshold
-derived from clean data — no anomaly labels are used at this stage.
+derived from loss function used to train for the clean data, no anomaly labels are used at this stage.
 
 **Stage 2 — Supervised anomaly type classification**
 
-Flagged windows are passed to a k-Nearest Neighbours (kNN, k=5) classifier trained in the
+The physics and MSE loss are computed both for the standard and PINN frameworks for the anomalous windows.
+These are passed to a k-Nearest Neighbours (kNN, k=5) classifier trained in the
 (log MSE, log physics loss) feature space. The kNN assigns each flagged window a fine-grained
 anomaly type label (9 classes: amplitude spike, damping, frequency shift, phase jump, etc.).
 
