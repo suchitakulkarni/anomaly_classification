@@ -1,0 +1,137 @@
+2026-05-05 08:39:18 | INFO     | src.utils | All random seeds set to: 42
+2026-05-05 08:39:18 | INFO     | src.utils | CUDA deterministic mode: True
+2026-05-05 08:39:18 | INFO     | src.utils | CUDA benchmark mode: False
+2026-05-05 08:39:18 | INFO     | __main__ | ============================================================
+2026-05-05 08:39:18 | INFO     | __main__ | COMPREHENSIVE ANOMALY DETECTION TEST SUITE
+2026-05-05 08:39:18 | INFO     | __main__ | ============================================================
+2026-05-05 08:39:18 | INFO     | src.utils | All random seeds set to: 42
+2026-05-05 08:39:18 | INFO     | src.utils | CUDA deterministic mode: True
+2026-05-05 08:39:18 | INFO     | src.utils | CUDA benchmark mode: False
+2026-05-05 08:39:18 | INFO     | __main__ | Using device: cpu
+2026-05-05 08:39:18 | INFO     | __main__ | === 1. Generating Clean Training Data ===
+2026-05-05 08:39:18 | INFO     | __main__ | Train size: 800, Val size: 200
+2026-05-05 08:39:18 | INFO     | __main__ | === 3. Fitting Threshold Bundles ===
+2026-05-05 08:39:18 | INFO     | src.threshold | Saved threshold bundle to results/threshold_bundle_pinn.npy
+2026-05-05 08:39:18 | INFO     | src.threshold | Threshold (p99) = 0.006243  |  clean scores: median=0.003031  max=0.006356
+2026-05-05 08:39:18 | INFO     | src.threshold | Saved threshold bundle to results/threshold_bundle_standard.npy
+2026-05-05 08:39:18 | INFO     | src.threshold | Threshold (p99) = 0.100821  |  clean scores: median=0.029904  max=0.101592
+2026-05-05 08:39:18 | INFO     | __main__ | === 4. Generating Test Baseline Signal ===
+2026-05-05 08:39:18 | INFO     | __main__ | === 5. Running Comprehensive Anomaly Test Suite ===
+2026-05-05 08:39:18 | INFO     | src.test_suite_runner | === Running Anomaly Test Suite for Physics-Informed ===
+2026-05-05 08:39:18 | INFO     | src.test_suite_runner | Testing: baseline...
+2026-05-05 08:39:19 | INFO     | src.test_suite_runner | Testing: amplitude_spikes...
+2026-05-05 08:39:20 | INFO     | src.test_suite_runner | Testing: frequency_violations...
+2026-05-05 08:39:20 | INFO     | src.test_suite_runner | Testing: phase_discontinuities...
+2026-05-05 08:39:21 | INFO     | src.test_suite_runner | Testing: damping_violations...
+2026-05-05 08:39:22 | INFO     | src.test_suite_runner | Testing: missing_data...
+2026-05-05 08:39:22 | INFO     | src.test_suite_runner | Testing: white_noise_bursts...
+2026-05-05 08:39:23 | INFO     | src.test_suite_runner | Testing: harmonic_contamination...
+2026-05-05 08:39:23 | INFO     | src.test_suite_runner | Testing: dc_offset_shifts...
+2026-05-05 08:39:24 | INFO     | src.test_suite_runner | Testing: amplitude_modulation...
+2026-05-05 08:39:25 | INFO     | src.test_suite_runner | Completed 10 anomaly tests.
+
+2026-05-05 08:39:25 | INFO     | src.test_suite_runner | === Running Anomaly Test Suite for Standard ===
+2026-05-05 08:39:25 | INFO     | src.test_suite_runner | Testing: baseline...
+2026-05-05 08:39:25 | INFO     | src.test_suite_runner | Testing: amplitude_spikes...
+2026-05-05 08:39:26 | INFO     | src.test_suite_runner | Testing: frequency_violations...
+2026-05-05 08:39:27 | INFO     | src.test_suite_runner | Testing: phase_discontinuities...
+2026-05-05 08:39:27 | INFO     | src.test_suite_runner | Testing: damping_violations...
+2026-05-05 08:39:28 | INFO     | src.test_suite_runner | Testing: missing_data...
+2026-05-05 08:39:28 | INFO     | src.test_suite_runner | Testing: white_noise_bursts...
+2026-05-05 08:39:29 | INFO     | src.test_suite_runner | Testing: harmonic_contamination...
+2026-05-05 08:39:29 | INFO     | src.test_suite_runner | Testing: dc_offset_shifts...
+2026-05-05 08:39:30 | INFO     | src.test_suite_runner | Testing: amplitude_modulation...
+2026-05-05 08:39:30 | INFO     | src.test_suite_runner | Completed 10 anomaly tests.
+
+2026-05-05 08:39:30 | INFO     | __main__ | === 6. Running Detection Evaluation ===
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | amplitude_spikes — AUC=1.000  P=0.031  R=1.000  F1=0.060  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | amplitude_spikes — AUC=1.000  P=0.055  R=1.000  F1=0.105  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | frequency_violations — AUC=1.000  P=0.051  R=1.000  F1=0.096  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | frequency_violations — AUC=1.000  P=0.088  R=1.000  F1=0.162  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | phase_discontinuities — AUC=0.972  P=0.031  R=1.000  F1=0.060  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | phase_discontinuities — AUC=0.976  P=0.051  R=0.967  F1=0.096  latency=1
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | damping_violations — AUC=0.941  P=0.060  R=0.983  F1=0.113  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | damping_violations — AUC=0.881  P=0.089  R=0.881  F1=0.161  latency=7
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | missing_data — AUC=1.000  P=0.045  R=1.000  F1=0.087  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | missing_data — AUC=0.865  P=0.074  R=0.909  F1=0.137  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | white_noise_bursts — AUC=0.976  P=0.051  R=1.000  F1=0.096  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | white_noise_bursts — AUC=0.747  P=0.070  R=0.796  F1=0.129  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | harmonic_contamination — AUC=0.999  P=0.061  R=1.000  F1=0.115  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | harmonic_contamination — AUC=0.567  P=0.061  R=0.542  F1=0.110  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | dc_offset_shifts — AUC=0.943  P=0.082  R=1.000  F1=0.151  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | dc_offset_shifts — AUC=0.367  P=0.059  R=0.430  F1=0.104  latency=1
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | amplitude_modulation — AUC=0.250  P=0.071  R=1.000  F1=0.133  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | amplitude_modulation — AUC=0.377  P=0.052  R=0.406  F1=0.092  latency=0
+2026-05-05 08:39:30 | INFO     | src.detection_metrics | Saved detection evaluation to results/detection_evaluation.csv
+2026-05-05 08:39:30 | INFO     | __main__ | === 8. Generating Visualizations ===
+2026-05-05 08:39:30 | INFO     | src.visualise | === Generating Comprehensive Test Suite Report ===
+2026-05-05 08:39:34 | INFO     | src.visualise | Saved: 2d_scatter_comparison.png
+2026-05-05 08:39:39 | INFO     | src.visualise | Saved: heatmaps_physics-informed.png
+2026-05-05 08:39:43 | INFO     | src.visualise | Saved: heatmaps_standard.png
+2026-05-05 08:39:49 | INFO     | src.visualise | Saved: reconstruction_grid_physics-informed.png
+2026-05-05 08:39:56 | INFO     | src.visualise | Saved: reconstruction_grid_standard.png
+2026-05-05 08:40:03 | INFO     | src.visualise | Saved: reconstruction_grid_overlay.png
+2026-05-05 08:40:05 | INFO     | src.visualise | Saved: reconstruction_grid_overlay.png
+2026-05-05 08:40:09 | INFO     | src.visualise | Saved: loss_distributions_boxplot.png
+2026-05-05 08:40:11 | INFO     | src.visualise | Saved: aggregated_metrics_comparison.png
+2026-05-05 08:40:11 | INFO     | src.visualise | === Report Generation Complete ===
+
+2026-05-05 08:40:14 | INFO     | src.visualise | Saved: 2d_scatter_with_threshold.png
+2026-05-05 08:40:19 | INFO     | src.visualise | Saved: roc_curves.png
+2026-05-05 08:40:23 | INFO     | src.visualise | Saved: score_distributions.png
+2026-05-05 08:40:23 | INFO     | __main__ | === 8. Quantitative Analysis ===
+2026-05-05 08:40:23 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-05 08:40:23 | INFO     | src.quantitative_metrics | QUANTITATIVE SEPARATION ANALYSIS
+2026-05-05 08:40:23 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | === Physics-Informed Separation Metrics ===
+2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | Silhouette Score: -0.0614 (higher is better, range [-1, 1])
+2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | Davies-Bouldin Index: 37.0370 (lower is better)
+2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | Calinski-Harabasz Index: 1054.25 (higher is better)
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | === Standard Separation Metrics ===
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Silhouette Score: -0.0033 (higher is better, range [-1, 1])
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Davies-Bouldin Index: 163.1834 (lower is better)
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Calinski-Harabasz Index: 252.64 (higher is better)
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | ----------------------------------------------------------------------
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | INTERPRETATION:
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | ----------------------------------------------------------------------
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Silhouette improvement: + -0.0581
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Davies-Bouldin improvement: + 126.1464
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Models show similar separation quality
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | === Physics-Informed Pairwise Separability (Mahalanobis Distance) ===
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Larger values indicate better separation between anomaly types
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | === Standard Pairwise Separability (Mahalanobis Distance) ===
+2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Larger values indicate better separation between anomaly types
+2026-05-05 08:40:28 | INFO     | src.quantitative_metrics | Saved: separability_heatmap_physics_informed.png
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | Saved: separability_heatmap_standard.png
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | Average pairwise separation:
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics |   Physics-Informed: 1.013
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics |   Standard:         0.590
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics |   Improvement:      + 71.6%
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | === Physics Loss Reduction Analysis ===
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | baseline                 :     50.0x reduction ( 98.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | amplitude_spikes         :  41218.0x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | frequency_violations     :   2384.6x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | phase_discontinuities    :  19858.7x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | damping_violations       :    699.5x reduction ( 99.9% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | missing_data             :   6077.0x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | white_noise_bursts       :  18916.0x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | harmonic_contamination   :  19082.1x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | dc_offset_shifts         :  34482.5x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | amplitude_modulation     :  52709.8x reduction (100.0% decrease)
+2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | OVERALL                  :   1615.8x reduction ( 99.9% decrease)
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | === Macro-class Classification Accuracy (anomalous windows only) ===
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | 3 classes, random baseline 33%
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | Physics-Informed: 0.693 +/- 0.241
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | Standard:         0.716 +/- 0.112
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | Improvement:      -2.3 percentage points
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | ANALYSIS COMPLETE
+2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-05 08:40:31 | INFO     | src.visualise | Saved: macro_class_confusion.png
+2026-05-05 08:40:34 | INFO     | src.visualise | Saved: micro_class_confusion.png
+2026-05-05 08:40:34 | INFO     | __main__ | === 9. End-to-end Pipeline Classification Evaluation ===
+2026-05-05 08:40:35 | INFO     | src.detection_metrics | e2e [physics_informed] (kNN): 467 / 468 true-anomalous windows detected (99.8%)
+2026-05-05 08:40:35 | INFO     | src.detection_metrics | e2e [standard] (kNN): 333 / 468 true-anomalous windows detected (71.2%)
+2026-05-05 08:40:38 | INFO     | src.visualise | Saved: e2e_confusion.png
+2026-05-05 08:40:38 | INFO     | __main__ | === Test Suite Complete ===
+2026-05-05 08:40:38 | INFO     | __main__ | All results saved to: results
