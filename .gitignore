@@ -1,0 +1,13 @@
+.DS_Store
+src/__pycache__
+src/.DS_Store
+plan.md
+results/standard
+results/physics_informed
+results/heatmaps_standard.png
+results/heatmaps_physics-informed.png
+results/loss_distributions_boxplot.png
+results/macro_class_confusion.png
+results/aggregated_metrics_comparison.png
+results/loss_distributions_boxplot.png
+
