@@ -1,4 +1,5 @@
 .DS_Store
+results/.DS_Store
 src/__pycache__
 src/.DS_Store
 plan.md
