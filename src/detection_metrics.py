@@ -153,19 +153,15 @@ def run_e2e_classification(pinn_results, standard_results,
                            classifier_pinn=None, classifier_std=None, micro_order=None):
     """
     End-to-end pipeline evaluation: detect anomalous windows unsupervised, then
-    classify each flagged window.
-
-    When classifier_pinn / classifier_std (fitted sklearn classifiers) and
-    micro_order (list of class name strings) are supplied, kNN classification
-    is used.  Otherwise falls back to the angle-based classify_flagged_window.
+    classify each flagged window with the supplied kNN classifier.
 
     For every ground-truth anomalous window:
-      - if detect() flags it  → predicted label from classifier or angle heuristic
+      - if detect() flags it  → predicted label from kNN classifier
       - if detect() misses it → predicted label = "normal"  (missed detection)
 
     Returns a dict keyed by model tag, each with lists of true and predicted labels.
     """
-    from src.threshold import detect, classify_flagged_window
+    from src.threshold import detect
 
     out = {}
     for model_tag, results, bundle, clf in [
@@ -185,26 +181,20 @@ def run_e2e_classification(pinn_results, standard_results,
             for i in np.where(true_mask)[0]:
                 true_labels.append(anomaly_type)
                 if bool_mask[i]:
-                    if clf is not None and micro_order is not None:
-                        log_point = np.array([[
-                            np.log10(float(result.mse_values[i]) + 1e-10),
-                            np.log10(float(result.physics_values[i]) + 1e-10),
-                        ]])
-                        pred = micro_order[int(clf.predict(log_point)[0])]
-                    else:
-                        pred, _ = classify_flagged_window(
-                            result.mse_values[i], result.physics_values[i], bundle
-                        )
+                    log_point = np.array([[
+                        np.log10(float(result.mse_values[i]) + 1e-10),
+                        np.log10(float(result.physics_values[i]) + 1e-10),
+                    ]])
+                    pred = micro_order[int(clf.predict(log_point)[0])]
                 else:
                     pred = "normal"
                 pred_labels.append(pred)
 
         out[model_tag] = {"true_labels": true_labels, "pred_labels": pred_labels}
         detected = sum(p != "normal" for p in pred_labels)
-        classifier_name = "kNN" if clf is not None else "angle heuristic"
         logger.info(
-            "e2e [%s] (%s): %d / %d true-anomalous windows detected (%.1f%%)",
-            model_tag, classifier_name, detected, len(pred_labels),
+            "e2e [%s] (kNN): %d / %d true-anomalous windows detected (%.1f%%)",
+            model_tag, detected, len(pred_labels),
             100 * detected / len(pred_labels) if pred_labels else 0,
         )
 

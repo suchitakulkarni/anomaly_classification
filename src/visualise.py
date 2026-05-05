@@ -1098,49 +1098,24 @@ def plot_2d_scatter_with_threshold(pinn_results, std_results, threshold_bundle_p
         ax.set_xscale('log')
         ax.set_yscale('log')
 
-        mean = bundle["mean"]   # [log10_mse, log10_phys]
+        # Axis-aligned classification boundaries from per-axis percentile thresholds
+        mse_thr = 10 ** bundle["mse_threshold"]
+        phys_thr = 10 ** bundle["phys_threshold"]
 
-        # Ray length spans from center to anomalous data edge in log10 space
-        anom_mse_parts, anom_phy_parts = [], []
-        for at, r in results.items():
-            if at == 'baseline':
-                continue
-            mask = windows_from_indices(r.anomaly_indices, r.anomaly_duration,
-                                        window_size, len(r.mse_values))
-            if mask.any():
-                anom_mse_parts.append(r.mse_values[mask])
-                anom_phy_parts.append(r.physics_values[mask])
-        all_mse = np.concatenate(anom_mse_parts) if anom_mse_parts else np.array([10 ** mean[0]])
-        all_phy = np.concatenate(anom_phy_parts) if anom_phy_parts else np.array([10 ** mean[1]])
-        log_mse_vals = np.log10(np.maximum(all_mse, 1e-10))
-        log_phy_vals = np.log10(np.maximum(all_phy, 1e-10))
-        ray_length = max(
-            log_mse_vals.max() - mean[0],
-            log_phy_vals.max() - mean[1],
-            2.0,
-        )
+        ax.axvline(mse_thr, linestyle='--', color='#c0392b', linewidth=1.5, alpha=0.8,
+                   label='MSE threshold' if ax_idx == 0 else '_nolegend_')
+        ax.axhline(phys_thr, linestyle='--', color='#1a5276', linewidth=1.5, alpha=0.8,
+                   label='Physics threshold' if ax_idx == 0 else '_nolegend_')
 
-        # Boundary lines at 20° and 70°
-        '''for angle_deg in [20.0, 70.0]:
-            rad = np.radians(angle_deg)
-            end_log = mean + ray_length * np.array([np.cos(rad), np.sin(rad)])
-            ax.plot(
-                [10 ** mean[0], 10 ** end_log[0]],
-                [10 ** mean[1], 10 ** end_log[1]],
-                '--', color='#555555', linewidth=1.5, alpha=0.75, zorder=4,
-                label=f'{angle_deg:.0f}° boundary' if ax_idx == 0 else '_nolegend_',
-            )'''
-
-        # Zone labels placed at midpoint angles of each sector
-        zone_mid_angles = [0.0, 45.0, 90.0]
-        zone_names = ['amplitude_spike\n/missing_data', 'white_noise\n/severe',
-                      'freq/phase\n/harmonic/dc']
-        zone_text_colors = ['#c0392b', '#784212', '#1a5276']
-        label_dist = ray_length * 0.55
-        for mid_ang, zone_name, zone_color in zip(zone_mid_angles, zone_names, zone_text_colors):
-            rad = np.radians(mid_ang)
-            lx = 10 ** (mean[0] + label_dist * np.cos(rad))
-            ly = 10 ** (mean[1] + label_dist * np.sin(rad))
+        # Quadrant zone labels
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        zone_labels = [
+            (mse_thr * 3, phys_thr / 3,  'amplitude_spike\n/missing_data', '#c0392b'),
+            (mse_thr * 3, phys_thr * 3,  'white_noise\n/severe',           '#784212'),
+            (mse_thr / 3, phys_thr * 3,  'freq/phase\n/harmonic/dc',       '#1a5276'),
+        ]
+        for lx, ly, zone_name, zone_color in zone_labels:
             ax.text(
                 lx, ly, zone_name, fontsize=7, color=zone_color,
                 ha='center', va='center', zorder=6,
@@ -1149,7 +1124,7 @@ def plot_2d_scatter_with_threshold(pinn_results, std_results, threshold_bundle_p
 
         ax.set_xlabel("MSE", fontsize=12)
         ax.set_ylabel("Physics Loss", fontsize=12)
-        ax.set_title(f"{title} — Mahalanobis ellipses & classification zones",
+        ax.set_title(f"{title} — per-axis classification thresholds",
                      fontsize=12, fontweight='bold')
         ax.grid(True, alpha=0.3)
         if ax_idx == 0:
@@ -1261,7 +1236,7 @@ def plot_confusion_matrix(classifications, true_labels, save_dir="results"):
     """
     Seaborn confusion matrix heatmap normalized by row.
 
-    classifications : list of predicted labels from classify_flagged_window
+    classifications : list of predicted labels from the kNN classifier
     true_labels     : list of true anomaly type strings (ground truth)
     """
     os.makedirs(save_dir, exist_ok=True)
@@ -1399,10 +1374,10 @@ def plot_e2e_confusion(e2e_data, save_dir="results"):
     """
     Side-by-side non-square confusion matrices for the end-to-end pipeline:
       rows  = 9 true anomaly types
-      cols  = predicted labels from classify_flagged_window  (+  "normal" for misses)
+      cols  = predicted labels from kNN classifier  (+  "normal" for misses)
 
     Row-normalised so each row sums to 1.  The "normal" column shows the missed-
-    detection rate; the other columns show the angle-classifier's grouping accuracy.
+    detection rate; the other columns show the kNN classifier's grouping accuracy.
     """
     os.makedirs(save_dir, exist_ok=True)
 
@@ -1448,20 +1423,123 @@ def plot_e2e_confusion(e2e_data, save_dir="results"):
             f"{title}  (detection rate={acc:.2f})",
             fontsize=12, fontweight="bold",
         )
-        ax.set_xlabel("Predicted label (angle classifier)", fontsize=11)
+        ax.set_xlabel("Predicted label (kNN classifier)", fontsize=11)
         ax.set_ylabel("True anomaly type", fontsize=11)
         plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
         plt.setp(ax.get_yticklabels(), rotation=0)
 
     fig.suptitle(
         "End-to-end pipeline: detect → classify\n"
-        "'normal' column = missed detections; other columns = angle-classifier output",
+        "'normal' column = missed detections; other columns = kNN classifier output",
         fontsize=13, fontweight="bold",
     )
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "e2e_confusion.png"), dpi=300)
     plt.close()
     logger.info("Saved: e2e_confusion.png")
+
+
+def plot_score_distributions(pinn_results, std_results, threshold_bundle_pinn,
+                              threshold_bundle_std, save_dir="results", window_size=30):
+    """
+    For each model, overlay the clean-calibration score histogram with per-anomaly-type
+    score histograms (anomalous windows only) and the p99 threshold line.
+
+    Scores right of the threshold → detected; scores left → missed.
+    This 1-D distributional view complements the 2-D scatter in
+    2d_scatter_with_threshold.png.
+    """
+    from src.detection_metrics import windows_from_indices
+    from src.threshold import detect
+
+    os.makedirs(save_dir, exist_ok=True)
+
+    colors = {
+        'amplitude_spikes':      '#e74c3c',
+        'frequency_violations':  '#f39c12',
+        'phase_discontinuities': '#2ecc71',
+        'damping_violations':    '#9b59b6',
+        'missing_data':          '#7f8c8d',
+        'white_noise_bursts':    '#1abc9c',
+        'harmonic_contamination':'#e91e63',
+        'dc_offset_shifts':      '#00bcd4',
+        'amplitude_modulation':  '#b8860b',
+    }
+    labels_map = {
+        'amplitude_spikes':      'Amplitude Spike',
+        'frequency_violations':  'Frequency Violation',
+        'phase_discontinuities': 'Phase Jump',
+        'damping_violations':    'Damping Violation',
+        'missing_data':          'Missing Data',
+        'white_noise_bursts':    'White Noise',
+        'harmonic_contamination':'Harmonic Contamination',
+        'dc_offset_shifts':      'DC Offset',
+        'amplitude_modulation':  'Amplitude Modulation',
+    }
+
+    fig, axes = plt.subplots(1, 2, figsize=(18, 6))
+
+    for ax_idx, (results, bundle, title) in enumerate([
+        (pinn_results,  threshold_bundle_pinn, "Physics-Informed"),
+        (std_results,   threshold_bundle_std,  "Standard"),
+    ]):
+        ax = axes[ax_idx]
+        clean_scores = bundle["all_clean_scores"]
+        threshold    = bundle["threshold"]
+
+        # Collect all scores to build shared log-spaced bin edges
+        all_scores = [clean_scores]
+        for anom_type, result in results.items():
+            if anom_type == 'baseline':
+                continue
+            _, sc = detect(result.mse_values, result.physics_values, bundle)
+            all_scores.append(sc)
+        combined  = np.concatenate(all_scores)
+        min_score = max(float(combined.min()), 1e-10)
+        max_score = float(combined.max())
+        bins = np.logspace(np.log10(min_score), np.log10(max_score), 60)
+
+        # Clean calibration baseline
+        ax.hist(clean_scores, bins=bins, density=True, alpha=0.45,
+                color='steelblue', label='Clean calibration', zorder=2)
+
+        # Per-anomaly-type (anomalous windows only)
+        for anom_type, result in results.items():
+            if anom_type == 'baseline':
+                continue
+            total_windows = len(result.mse_values)
+            anom_mask = windows_from_indices(
+                result.anomaly_indices, result.anomaly_duration, window_size, total_windows,
+            )
+            _, scores = detect(result.mse_values, result.physics_values, bundle)
+            anom_scores = scores[anom_mask]
+            if len(anom_scores) == 0:
+                continue
+            ax.hist(anom_scores, bins=bins, density=True, alpha=0.55,
+                    color=colors.get(anom_type, 'gray'),
+                    label=labels_map.get(anom_type, anom_type), zorder=3)
+
+        ax.axvline(threshold, color='crimson', linestyle='--', linewidth=2.5,
+                   label=f'p99 threshold ({threshold:.4f})', zorder=5)
+
+        lam = bundle.get("physics_loss_weight", 0.0)
+        score_label = "Anomaly score (MSE + λ·physics)" if lam > 0 else "Anomaly score (MSE)"
+        ax.set_xscale('log')
+        ax.set_xlabel(score_label, fontsize=11)
+        ax.set_ylabel("Density", fontsize=11)
+        ax.set_title(title, fontsize=13, fontweight='bold')
+        ax.legend(fontsize=7, ncol=2, loc='upper right')
+        ax.grid(True, alpha=0.3, which='both')
+
+    fig.suptitle(
+        "Score distribution overlay — calibration vs. per-anomaly-type\n"
+        "Scores right of threshold → detected;  left → missed",
+        fontsize=12, fontweight='bold',
+    )
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, "score_distributions.png"), dpi=300)
+    plt.close()
+    logger.info("Saved: score_distributions.png")
 
 
 def create_comprehensive_report(pinn_results, standard_results, x_clean, save_dir="results"):

@@ -12,10 +12,11 @@ from src.dataset import simulate_harmonic_oscillator, prepare_data
 from src.utils import set_all_seeds, seed_worker
 from src.test_suite_runner import compare_models_on_anomalies
 from src.visualise import (create_comprehensive_report, plot_2d_scatter_with_threshold,
-                           plot_roc_curves, plot_confusion_matrix, plot_macro_class_confusion,
-                           plot_micro_class_confusion, plot_e2e_confusion)
+                           plot_roc_curves, plot_macro_class_confusion,
+                           plot_micro_class_confusion, plot_e2e_confusion,
+                           plot_score_distributions)
 from src.quantitative_metrics import run_full_quantitative_analysis
-from src.threshold import set_threshold, classify_flagged_window
+from src.threshold import set_threshold
 from src.detection_metrics import run_detection_evaluation, windows_from_indices, run_e2e_classification
 from torch.serialization import add_safe_globals
 from sklearn.preprocessing import StandardScaler
@@ -224,11 +225,13 @@ def run_full_test_suite(config: Config, train_again = False):
     threshold_bundle_pinn = set_threshold(
         model_pinn, val_loader, config.OMEGA, config.DT, scaler, device,
         config.WINDOW_SIZE,
+        physics_loss_weight=config.PHYSICS_LOSS_WEIGHT,
         save_path=os.path.join(config.RESULTS_DIR, "threshold_bundle_pinn.npy"),
     )
     threshold_bundle_std = set_threshold(
         model_standard, val_loader, config.OMEGA, config.DT, scaler, device,
         config.WINDOW_SIZE,
+        physics_loss_weight=0.0,
         save_path=os.path.join(config.RESULTS_DIR, "threshold_bundle_standard.npy"),
     )
 
@@ -255,30 +258,7 @@ def run_full_test_suite(config: Config, train_again = False):
         dt=config.DT
     )
 
-    logger.info("=== 6. Running Detection + Classification ===")
-    classified = {"physics_informed": {"classifications": [], "true_labels": []},
-                  "standard": {"classifications": [], "true_labels": []}}
-    anomaly_types = [k for k in pinn_results if k != "baseline"]
-    for anomaly_type in anomaly_types:
-        for model_tag, results, bundle in [
-            ("physics_informed", pinn_results, threshold_bundle_pinn),
-            ("standard", standard_results, threshold_bundle_std),
-        ]:
-            result = results[anomaly_type]
-            total_windows = len(result.mse_values)
-            true_mask = windows_from_indices(
-                result.anomaly_indices, result.anomaly_duration,
-                config.WINDOW_SIZE, total_windows,
-            )
-            for i in range(total_windows):
-                if true_mask[i]:
-                    label, _ = classify_flagged_window(
-                        result.mse_values[i], result.physics_values[i], bundle
-                    )
-                    classified[model_tag]["classifications"].append(label)
-                    classified[model_tag]["true_labels"].append(anomaly_type)
-
-    logger.info("=== 7. Running Detection Evaluation ===")
+    logger.info("=== 6. Running Detection Evaluation ===")
     eval_df = run_detection_evaluation(
         pinn_results=pinn_results,
         standard_results=standard_results,
@@ -311,14 +291,15 @@ def run_full_test_suite(config: Config, train_again = False):
         threshold_bundle_std=threshold_bundle_std,
         config=config,
     )
-    for model_tag in ("physics_informed", "standard"):
-        plot_confusion_matrix(
-            classifications=classified[model_tag]["classifications"],
-            true_labels=classified[model_tag]["true_labels"],
-            save_dir=os.path.join(config.RESULTS_DIR, model_tag),
-        )
-
-    logger.info("=== 9. Quantitative Analysis ===")
+    plot_score_distributions(
+        pinn_results=pinn_results,
+        std_results=standard_results,
+        threshold_bundle_pinn=threshold_bundle_pinn,
+        threshold_bundle_std=threshold_bundle_std,
+        save_dir=config.RESULTS_DIR,
+        window_size=config.WINDOW_SIZE,
+    )
+    logger.info("=== 8. Quantitative Analysis ===")
     knn_data = run_full_quantitative_analysis(
         pinn_results=pinn_results,
         standard_results=standard_results,
@@ -328,7 +309,7 @@ def run_full_test_suite(config: Config, train_again = False):
     plot_macro_class_confusion(knn_data, save_dir=config.RESULTS_DIR)
     plot_micro_class_confusion(knn_data, save_dir=config.RESULTS_DIR)
 
-    logger.info("=== 10. End-to-end Pipeline Classification Evaluation ===")
+    logger.info("=== 9. End-to-end Pipeline Classification Evaluation ===")
     from sklearn.neighbors import KNeighborsClassifier
     knn_pinn = KNeighborsClassifier(n_neighbors=5).fit(
         knn_data['X_pinn'], knn_data['y_pinn_micro']
