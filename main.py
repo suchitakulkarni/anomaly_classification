@@ -1,3 +1,4 @@
+import sys
 import torch
 import torch.nn as nn
 import numpy as np
@@ -8,13 +9,13 @@ from src.utils import setup_logging
 from src.config import Config
 from src.model import LSTMAutoencoder
 from src.train import train_model_with_validation
-from src.dataset import simulate_harmonic_oscillator, prepare_data
+from src.dataset import simulate_harmonic_oscillator, prepare_data, build_multi_segment_dataset
 from src.utils import set_all_seeds, seed_worker
 from src.test_suite_runner import compare_models_on_anomalies
 from src.visualise import (create_comprehensive_report, plot_2d_scatter_with_threshold,
                            plot_roc_curves, plot_macro_class_confusion,
                            plot_micro_class_confusion, plot_e2e_confusion,
-                           plot_score_distributions)
+                           plot_score_distributions, plot_training_diagnostics)
 from src.quantitative_metrics import run_full_quantitative_analysis
 from src.threshold import set_threshold
 from src.detection_metrics import run_detection_evaluation, windows_from_indices, run_e2e_classification
@@ -119,8 +120,9 @@ def train_both_models(config, train_loader, val_loader, device, scaler):
         "config": {
             "window_size": config.WINDOW_SIZE,
             "hidden_dim": config.HIDDEN_DIM,
-            "omega": config.OMEGA,
-            "dt": config.DT
+            "omega_range": config.OMEGA_RANGE,
+            "test_omega": config.TEST_OMEGA,
+            "dt": config.DT,
         }
     }, save_path)
 
@@ -134,15 +136,16 @@ def train_both_models(config, train_loader, val_loader, device, scaler):
         "config": {
             "window_size": config.WINDOW_SIZE,
             "hidden_dim": config.HIDDEN_DIM,
-            "omega": config.OMEGA,
+            "omega_range": config.OMEGA_RANGE,
+            "test_omega": config.TEST_OMEGA,
             "dt": config.DT,
-            "physics_weight": config.PHYSICS_LOSS_WEIGHT
+            "physics_weight": config.PHYSICS_LOSS_WEIGHT,
         }
     }, save_path)
 
     logger.info(f"Saved model checkpoint to {save_path}")
-    
-    return model_pinn, model_standard
+
+    return model_pinn, model_standard, history_pinn, history_standard
 
 
 def run_full_test_suite(config: Config, train_again = False):
@@ -152,84 +155,92 @@ def run_full_test_suite(config: Config, train_again = False):
     set_all_seeds(config.RANDOM_STATE)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: %s", device)
-    
+
     g = torch.Generator()
     g.manual_seed(config.RANDOM_STATE)
-    if config.SINGLE_FREQUENCY:
-        logger.info("=== 1. Generating Clean Training Data ===")
-        x_clean_full = simulate_harmonic_oscillator(
-            timesteps=config.TIMESTEPS,
-            dt=config.DT,
-            omega=config.OMEGA,
-            noise_std=config.NOISE,
-            seed=config.RANDOM_STATE,
-            amplitude=3.0,
-            phase=0.5
-        )
-    else:
-        segments = []
-        for i in range(10):
-            x_segment = simulate_harmonic_oscillator(
-                timesteps=config.TIMESTEPS // 10,
-                dt=config.DT,
-                omega=config.OMEGA,
-                noise_std=config.NOISE,
-                seed=config.RANDOM_STATE + i,
-                amplitude=np.random.uniform(2.0, 4.0),  # Vary amplitude
-            phase=np.random.uniform(0, 2*np.pi)     # Vary phase
-            )
-            segments.append(x_segment)
 
-        x_clean_full = np.concatenate(segments)
-    
-    train_size = int(0.8 * len(x_clean_full))
-    x_train_raw = x_clean_full[:train_size]
-    x_val_raw = x_clean_full[train_size:]
-    
-    logger.info(f"Train size: {len(x_train_raw)}, Val size: {len(x_val_raw)}")
-    
-    X_train_np, scaler, _ = prepare_data(x_train_raw, config.WINDOW_SIZE)
+    n_train_seg = int(config.NUM_SEGMENTS * 0.8)
+    n_val_seg = config.NUM_SEGMENTS - n_train_seg
+
+    logger.info("=== 1. Generating Multi-Frequency Training Data ===")
+    X_train_np, omega_train_np, scaler = build_multi_segment_dataset(
+        num_segments=n_train_seg,
+        timesteps_per_segment=config.TIMESTEPS_PER_SEGMENT,
+        dt=config.DT,
+        omega_range=config.OMEGA_RANGE,
+        noise_range=config.NOISE_RANGE,
+        window_size=config.WINDOW_SIZE,
+        scaler=None,
+        seed=config.RANDOM_STATE,
+    )
+    X_val_np, omega_val_np, _ = build_multi_segment_dataset(
+        num_segments=n_val_seg,
+        timesteps_per_segment=config.TIMESTEPS_PER_SEGMENT,
+        dt=config.DT,
+        omega_range=config.OMEGA_RANGE,
+        noise_range=config.NOISE_RANGE,
+        window_size=config.WINDOW_SIZE,
+        scaler=scaler,
+        seed=config.RANDOM_STATE + 999,
+    )
+
+    logger.info("Train windows: %d  |  Val windows: %d", len(X_train_np), len(X_val_np))
+
     X_train_tensor = torch.from_numpy(X_train_np).float().to(device)
-    
-    X_val_np, _, _ = prepare_data(x_val_raw, config.WINDOW_SIZE, scaler=scaler)
+    omega_train_tensor = torch.from_numpy(omega_train_np).float().to(device)
     X_val_tensor = torch.from_numpy(X_val_np).float().to(device)
-    
-    train_dataset = TensorDataset(X_train_tensor, X_train_tensor)
+    omega_val_tensor = torch.from_numpy(omega_val_np).float().to(device)
+
+    train_dataset = TensorDataset(X_train_tensor, X_train_tensor, omega_train_tensor)
     train_loader = DataLoader(
         train_dataset,
         batch_size=config.BATCH_SIZE,
         shuffle=True,
         generator=g,
-        worker_init_fn=seed_worker
+        worker_init_fn=seed_worker,
     )
-    
-    val_dataset = TensorDataset(X_val_tensor, X_val_tensor)
+
+    val_dataset = TensorDataset(X_val_tensor, X_val_tensor, omega_val_tensor)
     val_loader = DataLoader(
         val_dataset,
         batch_size=config.BATCH_SIZE,
         shuffle=False,
         generator=g,
-        worker_init_fn=seed_worker
+        worker_init_fn=seed_worker,
     )
     if train_again:
         logger.info("=== 2. Training Both Models ===")
-        model_pinn, model_standard = train_both_models(
+        model_pinn, model_standard, history_pinn, history_standard = train_both_models(
             config, train_loader, val_loader, device, scaler
+        )
+        logger.info("=== 2b. Plotting Training Diagnostics ===")
+        plot_training_diagnostics(
+            history_pinn=history_pinn,
+            history_standard=history_standard,
+            X_train_np=X_train_np,
+            model_pinn=model_pinn,
+            model_standard=model_standard,
+            device=device,
+            scaler=scaler,
+            save_dir=config.RESULTS_DIR,
+            window_size=config.WINDOW_SIZE,
+            timesteps_per_segment=config.TIMESTEPS_PER_SEGMENT,
         )
     else:
         model_dir = os.path.join(config.RESULTS_DIR, "saved_models")
         model_standard, scaler, cfg = load_model(os.path.join(model_dir, "lstm_autoencoder_standard.pt"), device)
         model_pinn, scaler, cfg = load_model(os.path.join(model_dir, "lstm_autoencoder_pinn.pt"), device)
+
     
     logger.info("=== 3. Fitting Threshold Bundles ===")
     threshold_bundle_pinn = set_threshold(
-        model_pinn, val_loader, config.OMEGA, config.DT, scaler, device,
+        model_pinn, val_loader, config.TEST_OMEGA, config.DT, scaler, device,
         config.WINDOW_SIZE,
         physics_loss_weight=config.PHYSICS_LOSS_WEIGHT,
         save_path=os.path.join(config.RESULTS_DIR, "threshold_bundle_pinn.npy"),
     )
     threshold_bundle_std = set_threshold(
-        model_standard, val_loader, config.OMEGA, config.DT, scaler, device,
+        model_standard, val_loader, config.TEST_OMEGA, config.DT, scaler, device,
         config.WINDOW_SIZE,
         physics_loss_weight=0.0,
         save_path=os.path.join(config.RESULTS_DIR, "threshold_bundle_standard.npy"),
@@ -239,11 +250,11 @@ def run_full_test_suite(config: Config, train_again = False):
     x_test_baseline = simulate_harmonic_oscillator(
         timesteps=config.TIMESTEPS,
         dt=config.DT,
-        omega=config.OMEGA,
-        noise_std=config.NOISE,
+        omega=config.TEST_OMEGA,
+        noise_std=config.TEST_NOISE,
         seed=config.RANDOM_STATE + 100,
-        amplitude = 3.0,
-        phase=0.5
+        amplitude=3.0,
+        phase=0.5,
     )
 
     logger.info("=== 5. Running Comprehensive Anomaly Test Suite ===")
@@ -254,8 +265,8 @@ def run_full_test_suite(config: Config, train_again = False):
         x_clean=x_test_baseline,
         scaler=scaler,
         device=device,
-        omega=config.OMEGA,
-        dt=config.DT
+        omega=config.TEST_OMEGA,
+        dt=config.DT,
     )
 
     logger.info("=== 6. Running Detection Evaluation ===")
@@ -342,4 +353,4 @@ if __name__ == "__main__":
     logger.info("COMPREHENSIVE ANOMALY DETECTION TEST SUITE")
     logger.info("="*60)
     
-    run_full_test_suite(app_config, train_again = False)
+    run_full_test_suite(app_config, train_again = True)

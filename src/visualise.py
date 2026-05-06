@@ -1567,3 +1567,99 @@ def create_comprehensive_report(pinn_results, standard_results, x_clean, save_di
     plot_aggregated_metrics_comparison(pinn_agg, standard_agg, save_dir)
     
     logger.info("=== Report Generation Complete ===\n")
+
+
+def plot_training_diagnostics(history_pinn, history_standard, X_train_np,
+                               model_pinn, model_standard, device, scaler, save_dir,
+                               window_size=30, timesteps_per_segment=500,
+                               n_samples=3, rng_seed=42):
+    """
+    Two-panel diagnostic saved after training:
+      1. Loss curves (train + val total, plus physics component for PINN) for both models.
+      2. Full-signal reconstruction for n_samples training segments overlaid with both models.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    # ── Figure 1: loss curves ──────────────────────────────────────────────────
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig.suptitle("Training Loss Curves", fontsize=14, fontweight="bold")
+
+    for ax, history, label, show_physics in [
+        (axes[0], history_pinn,     "Physics-Informed", True),
+        (axes[1], history_standard, "Standard",         False),
+    ]:
+        epochs = np.arange(1, len(history["train_total"]) + 1)
+        ax.plot(epochs, history["train_total"], label="Train total", color="steelblue")
+        ax.plot(epochs, history["val_total"],   label="Val total",   color="darkorange", linestyle="--")
+        if show_physics:
+            ax.plot(epochs, history["train_physics"], label="Train physics",
+                    color="green", linewidth=0.8, linestyle=":")
+        ax.set_title(label)
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("Loss")
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    loss_path = os.path.join(save_dir, "training_loss_curves.png")
+    fig.savefig(loss_path, dpi=120, bbox_inches="tight")
+    plt.close(fig)
+    logger.info("Saved loss curves → %s", loss_path)
+
+    # ── Figure 2: full-signal reconstruction for n_samples training segments ──
+    n_wins_per_seg = timesteps_per_segment - window_size + 1
+    n_total_segs = len(X_train_np) // n_wins_per_seg
+    n_samples = min(n_samples, n_total_segs)
+
+    rng = np.random.default_rng(rng_seed)
+    seg_indices = rng.choice(n_total_segs, size=n_samples, replace=False)
+
+    model_pinn.eval()
+    model_standard.eval()
+
+    fig, axes = plt.subplots(n_samples, 1, figsize=(14, 4 * n_samples))
+    fig.suptitle("Training Signal Reconstruction (scaled)", fontsize=14, fontweight="bold")
+    if n_samples == 1:
+        axes = [axes]
+
+    for row, seg_idx in enumerate(seg_indices):
+        start = seg_idx * n_wins_per_seg
+        end = start + n_wins_per_seg
+        seg_windows = X_train_np[start:end]  # (n_wins_per_seg, window_size, 1)
+
+        # Recover full original signal: first element of each window, then tail of last window
+        original_signal = np.concatenate([seg_windows[:, 0, 0], seg_windows[-1, 1:, 0]])
+        N_signal = len(original_signal)
+        t = np.arange(N_signal)
+
+        with torch.no_grad():
+            windows_tensor = torch.from_numpy(seg_windows).float().to(device)
+            recon_pinn_windows = model_pinn(windows_tensor).cpu().numpy()
+            recon_std_windows  = model_standard(windows_tensor).cpu().numpy()
+
+        recon_pinn_full = _get_full_reconstruction(recon_pinn_windows, N_signal, window_size)
+        recon_std_full  = _get_full_reconstruction(recon_std_windows,  N_signal, window_size)
+
+        mse_pinn = float(np.nanmean((original_signal - recon_pinn_full) ** 2))
+        mse_std  = float(np.nanmean((original_signal - recon_std_full)  ** 2))
+
+        ax = axes[row]
+        ax.plot(t, original_signal, label="Original signal",
+                color="steelblue", linewidth=1.5, alpha=0.8)
+        ax.plot(t, recon_pinn_full,
+                label=f"PI-LSTM reconstruction (MSE={mse_pinn:.4e})",
+                color="green", linestyle="--", linewidth=1.5)
+        ax.plot(t, recon_std_full,
+                label=f"Standard reconstruction (MSE={mse_std:.4e})",
+                color="darkorange", linestyle="--", linewidth=1.5, alpha=0.8)
+        ax.set_title(f"Training segment {seg_idx}")
+        ax.set_xlabel("Timestep")
+        ax.set_ylabel("Scaled value")
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    recon_path = os.path.join(save_dir, "training_reconstruction_samples.png")
+    fig.savefig(recon_path, dpi=120, bbox_inches="tight")
+    plt.close(fig)
+    logger.info("Saved reconstruction samples → %s", recon_path)

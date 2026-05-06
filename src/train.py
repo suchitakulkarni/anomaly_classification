@@ -37,23 +37,24 @@ def inverse_scale(x_scaled, scaler):
 def calculate_physics_loss(reconstruction, omega, dt, scaler):
     """
     Physics loss computed fully in physical coordinates.
-    """
-    # remove feature dimension
-    x_scaled = reconstruction.squeeze(-1)
 
-    # inverse scale first
+    omega may be a Python float, a 0-dim tensor (scalar test-time usage),
+    or a 1-D tensor of shape (batch,) (training with per-window omega labels).
+    """
+    x_scaled = reconstruction.squeeze(-1)
     x_phys = inverse_scale(x_scaled, scaler)
 
-    # second time derivative in physical coordinates
     d2x_phys_dt2 = (
         x_phys[:, 2:]
         - 2.0 * x_phys[:, 1:-1]
         + x_phys[:, :-2]
     ) / (dt ** 2)
 
-    # physics residual
-    residual = d2x_phys_dt2 + (omega ** 2) * x_phys[:, 1:-1]
+    omega_sq = omega ** 2
+    if isinstance(omega_sq, torch.Tensor) and omega_sq.dim() == 1:
+        omega_sq = omega_sq.unsqueeze(1)   # (batch,) -> (batch, 1) for broadcast
 
+    residual = (d2x_phys_dt2 + omega_sq * x_phys[:, 1:-1]) / omega_sq
     return torch.mean(residual ** 2)
 
 
@@ -77,20 +78,12 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs,
 
             reconstruction = model(data_window)
 
-            # Reconstruction loss (MSE)
             mse_loss = torch.mean(criterion(reconstruction, data_window))
-            if isinstance(scaler, StandardScaler):
-                omega_wrong = 2.0 * scaler.scale_[0]    # wrong by amplitude scale
-            elif isinstance(scaler, MinMaxScaler):
-                omega_wrong = 2.0 / (scaler.data_max_[0] - scaler.data_min_[0])
-            else:
-                raise TypeError("Unknown scaler")            
-            # Physics loss
             if physics_loss_weight > 0:
                 phy_loss = calculate_physics_loss(
                     reconstruction=reconstruction,
                     omega=2.0,
-                    dt=dt, 
+                    dt=dt,
                     scaler=scaler
                 )
             else:
@@ -177,21 +170,22 @@ def train_model_with_validation(model, train_loader, val_loader, criterion, opti
         
         for data in train_loader:
             data_window = data[0].to(device)
+            batch_omega = data[2].to(device)
             optimizer.zero_grad()
-            
+
             reconstruction = model(data_window)
             mse_loss = torch.mean(criterion(reconstruction, data_window))
-            
+
             if physics_loss_weight > 0:
                 phy_loss = calculate_physics_loss(
                     reconstruction=reconstruction,
-                    omega=2.0,
+                    omega=batch_omega,
                     dt=dt,
                     scaler=scaler
                 )
             else:
                 phy_loss = 0.0
-            
+
             total_loss = mse_loss + physics_loss_weight * phy_loss
             total_loss.backward()
             optimizer.step()
@@ -215,14 +209,15 @@ def train_model_with_validation(model, train_loader, val_loader, criterion, opti
         with torch.no_grad():
             for data in val_loader:
                 data_window = data[0].to(device)
+                batch_omega = data[2].to(device)
                 reconstruction = model(data_window)
-                
+
                 mse_loss = torch.mean(criterion(reconstruction, data_window))
-                
+
                 if physics_loss_weight > 0:
                     phy_loss = calculate_physics_loss(
                         reconstruction=reconstruction,
-                        omega=2.0,
+                        omega=batch_omega,
                         dt=dt,
                         scaler=scaler
                     )

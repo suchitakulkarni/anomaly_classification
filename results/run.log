@@ -1,137 +1,251 @@
-2026-05-05 08:39:18 | INFO     | src.utils | All random seeds set to: 42
-2026-05-05 08:39:18 | INFO     | src.utils | CUDA deterministic mode: True
-2026-05-05 08:39:18 | INFO     | src.utils | CUDA benchmark mode: False
-2026-05-05 08:39:18 | INFO     | __main__ | ============================================================
-2026-05-05 08:39:18 | INFO     | __main__ | COMPREHENSIVE ANOMALY DETECTION TEST SUITE
-2026-05-05 08:39:18 | INFO     | __main__ | ============================================================
-2026-05-05 08:39:18 | INFO     | src.utils | All random seeds set to: 42
-2026-05-05 08:39:18 | INFO     | src.utils | CUDA deterministic mode: True
-2026-05-05 08:39:18 | INFO     | src.utils | CUDA benchmark mode: False
-2026-05-05 08:39:18 | INFO     | __main__ | Using device: cpu
-2026-05-05 08:39:18 | INFO     | __main__ | === 1. Generating Clean Training Data ===
-2026-05-05 08:39:18 | INFO     | __main__ | Train size: 800, Val size: 200
-2026-05-05 08:39:18 | INFO     | __main__ | === 3. Fitting Threshold Bundles ===
-2026-05-05 08:39:18 | INFO     | src.threshold | Saved threshold bundle to results/threshold_bundle_pinn.npy
-2026-05-05 08:39:18 | INFO     | src.threshold | Threshold (p99) = 0.006243  |  clean scores: median=0.003031  max=0.006356
-2026-05-05 08:39:18 | INFO     | src.threshold | Saved threshold bundle to results/threshold_bundle_standard.npy
-2026-05-05 08:39:18 | INFO     | src.threshold | Threshold (p99) = 0.100821  |  clean scores: median=0.029904  max=0.101592
-2026-05-05 08:39:18 | INFO     | __main__ | === 4. Generating Test Baseline Signal ===
-2026-05-05 08:39:18 | INFO     | __main__ | === 5. Running Comprehensive Anomaly Test Suite ===
-2026-05-05 08:39:18 | INFO     | src.test_suite_runner | === Running Anomaly Test Suite for Physics-Informed ===
-2026-05-05 08:39:18 | INFO     | src.test_suite_runner | Testing: baseline...
-2026-05-05 08:39:19 | INFO     | src.test_suite_runner | Testing: amplitude_spikes...
-2026-05-05 08:39:20 | INFO     | src.test_suite_runner | Testing: frequency_violations...
-2026-05-05 08:39:20 | INFO     | src.test_suite_runner | Testing: phase_discontinuities...
-2026-05-05 08:39:21 | INFO     | src.test_suite_runner | Testing: damping_violations...
-2026-05-05 08:39:22 | INFO     | src.test_suite_runner | Testing: missing_data...
-2026-05-05 08:39:22 | INFO     | src.test_suite_runner | Testing: white_noise_bursts...
-2026-05-05 08:39:23 | INFO     | src.test_suite_runner | Testing: harmonic_contamination...
-2026-05-05 08:39:23 | INFO     | src.test_suite_runner | Testing: dc_offset_shifts...
-2026-05-05 08:39:24 | INFO     | src.test_suite_runner | Testing: amplitude_modulation...
-2026-05-05 08:39:25 | INFO     | src.test_suite_runner | Completed 10 anomaly tests.
+2026-05-06 11:49:01 | INFO     | src.utils | All random seeds set to: 42
+2026-05-06 11:49:01 | INFO     | src.utils | CUDA deterministic mode: True
+2026-05-06 11:49:01 | INFO     | src.utils | CUDA benchmark mode: False
+2026-05-06 11:49:01 | INFO     | __main__ | ============================================================
+2026-05-06 11:49:01 | INFO     | __main__ | COMPREHENSIVE ANOMALY DETECTION TEST SUITE
+2026-05-06 11:49:01 | INFO     | __main__ | ============================================================
+2026-05-06 11:49:01 | INFO     | src.utils | All random seeds set to: 42
+2026-05-06 11:49:01 | INFO     | src.utils | CUDA deterministic mode: True
+2026-05-06 11:49:01 | INFO     | src.utils | CUDA benchmark mode: False
+2026-05-06 11:49:01 | INFO     | __main__ | Using device: cuda
+2026-05-06 11:49:01 | INFO     | __main__ | === 1. Generating Multi-Frequency Training Data ===
+2026-05-06 11:49:01 | INFO     | __main__ | Train windows: 7536  |  Val windows: 1884
+2026-05-06 11:49:01 | INFO     | __main__ | === 2. Training Both Models ===
+2026-05-06 11:49:01 | INFO     | __main__ | === Training Physics-Informed Model ===
+2026-05-06 11:49:01 | INFO     | src.utils | All random seeds set to: 42
+2026-05-06 11:49:01 | INFO     | src.utils | CUDA deterministic mode: True
+2026-05-06 11:49:01 | INFO     | src.utils | CUDA benchmark mode: False
+2026-05-06 11:49:06 | INFO     | src.train | Epoch 010/2000 | Train Loss: 0.009752 | Val Loss: 0.012356 | Val Phy Loss: 6.367234 | Gap: 0.002605 | Best: 9
+2026-05-06 11:49:10 | INFO     | src.train | Epoch 020/2000 | Train Loss: 0.005604 | Val Loss: 0.006948 | Val Phy Loss: 2.195973 | Gap: 0.001343 | Best: 16
+2026-05-06 11:49:13 | INFO     | src.train | Epoch 030/2000 | Train Loss: 0.005724 | Val Loss: 0.007541 | Val Phy Loss: 1.435795 | Gap: 0.001817 | Best: 24
+2026-05-06 11:49:17 | INFO     | src.train | Epoch 040/2000 | Train Loss: 0.005489 | Val Loss: 0.007392 | Val Phy Loss: 1.277290 | Gap: 0.001903 | Best: 24
+2026-05-06 11:49:21 | INFO     | src.train | Epoch 050/2000 | Train Loss: 0.005018 | Val Loss: 0.006884 | Val Phy Loss: 2.353786 | Gap: 0.001866 | Best: 44
+2026-05-06 11:49:24 | INFO     | src.train | Epoch 060/2000 | Train Loss: 0.005060 | Val Loss: 0.006256 | Val Phy Loss: 1.058924 | Gap: 0.001196 | Best: 59
+2026-05-06 11:49:28 | INFO     | src.train | Epoch 070/2000 | Train Loss: 0.005003 | Val Loss: 0.006207 | Val Phy Loss: 1.385302 | Gap: 0.001204 | Best: 59
+2026-05-06 11:49:31 | INFO     | src.train | Epoch 080/2000 | Train Loss: 0.004919 | Val Loss: 0.006410 | Val Phy Loss: 0.915173 | Gap: 0.001491 | Best: 59
+2026-05-06 11:49:35 | INFO     | src.train | Epoch 090/2000 | Train Loss: 0.004986 | Val Loss: 0.006097 | Val Phy Loss: 1.172507 | Gap: 0.001112 | Best: 81
+2026-05-06 11:49:39 | INFO     | src.train | Epoch 100/2000 | Train Loss: 0.005210 | Val Loss: 0.006297 | Val Phy Loss: 1.056968 | Gap: 0.001086 | Best: 81
+2026-05-06 11:49:42 | INFO     | src.train | Epoch 110/2000 | Train Loss: 0.004876 | Val Loss: 0.006157 | Val Phy Loss: 0.782930 | Gap: 0.001280 | Best: 108
+2026-05-06 11:49:46 | INFO     | src.train | Epoch 120/2000 | Train Loss: 0.004807 | Val Loss: 0.005824 | Val Phy Loss: 1.168368 | Gap: 0.001017 | Best: 119
+2026-05-06 11:49:49 | INFO     | src.train | Epoch 130/2000 | Train Loss: 0.004744 | Val Loss: 0.005713 | Val Phy Loss: 0.661910 | Gap: 0.000969 | Best: 119
+2026-05-06 11:49:52 | INFO     | src.train | Epoch 140/2000 | Train Loss: 0.004413 | Val Loss: 0.005560 | Val Phy Loss: 0.667540 | Gap: 0.001147 | Best: 133
+2026-05-06 11:49:56 | INFO     | src.train | Epoch 150/2000 | Train Loss: 0.004480 | Val Loss: 0.005634 | Val Phy Loss: 0.729831 | Gap: 0.001154 | Best: 140
+2026-05-06 11:50:00 | INFO     | src.train | Epoch 160/2000 | Train Loss: 0.005365 | Val Loss: 0.006487 | Val Phy Loss: 1.351124 | Gap: 0.001122 | Best: 159
+2026-05-06 11:50:03 | INFO     | src.train | Epoch 170/2000 | Train Loss: 0.004666 | Val Loss: 0.006152 | Val Phy Loss: 1.466652 | Gap: 0.001486 | Best: 159
+2026-05-06 11:50:07 | INFO     | src.train | Epoch 180/2000 | Train Loss: 0.004647 | Val Loss: 0.005873 | Val Phy Loss: 0.877403 | Gap: 0.001226 | Best: 159
+2026-05-06 11:50:11 | INFO     | src.train | Epoch 190/2000 | Train Loss: 0.004563 | Val Loss: 0.005570 | Val Phy Loss: 0.780409 | Gap: 0.001006 | Best: 159
+2026-05-06 11:50:15 | INFO     | src.train | Epoch 200/2000 | Train Loss: 0.005015 | Val Loss: 0.005842 | Val Phy Loss: 0.920711 | Gap: 0.000827 | Best: 197
+2026-05-06 11:50:18 | INFO     | src.train | Epoch 210/2000 | Train Loss: 0.004407 | Val Loss: 0.005595 | Val Phy Loss: 0.739329 | Gap: 0.001188 | Best: 197
+2026-05-06 11:50:22 | INFO     | src.train | Epoch 220/2000 | Train Loss: 0.004364 | Val Loss: 0.005456 | Val Phy Loss: 0.791345 | Gap: 0.001092 | Best: 197
+2026-05-06 11:50:26 | INFO     | src.train | Epoch 230/2000 | Train Loss: 0.004420 | Val Loss: 0.005478 | Val Phy Loss: 0.817504 | Gap: 0.001058 | Best: 220
+2026-05-06 11:50:29 | INFO     | src.train | Epoch 240/2000 | Train Loss: 0.004345 | Val Loss: 0.005479 | Val Phy Loss: 0.846411 | Gap: 0.001134 | Best: 220
+2026-05-06 11:50:33 | INFO     | src.train | Epoch 250/2000 | Train Loss: 0.004344 | Val Loss: 0.005601 | Val Phy Loss: 0.852956 | Gap: 0.001258 | Best: 220
+2026-05-06 11:50:37 | INFO     | src.train | Epoch 260/2000 | Train Loss: 0.004537 | Val Loss: 0.006511 | Val Phy Loss: 1.214299 | Gap: 0.001974 | Best: 220
+2026-05-06 11:50:41 | INFO     | src.train | Epoch 270/2000 | Train Loss: 0.004486 | Val Loss: 0.005661 | Val Phy Loss: 1.029588 | Gap: 0.001175 | Best: 220
+2026-05-06 11:50:44 | INFO     | src.train | Epoch 280/2000 | Train Loss: 0.004342 | Val Loss: 0.005510 | Val Phy Loss: 1.047808 | Gap: 0.001167 | Best: 274
+2026-05-06 11:50:48 | INFO     | src.train | Epoch 290/2000 | Train Loss: 0.004458 | Val Loss: 0.005560 | Val Phy Loss: 0.886211 | Gap: 0.001102 | Best: 284
+2026-05-06 11:50:51 | INFO     | src.train | Epoch 300/2000 | Train Loss: 0.004359 | Val Loss: 0.005989 | Val Phy Loss: 1.187423 | Gap: 0.001630 | Best: 284
+2026-05-06 11:50:55 | INFO     | src.train | Epoch 310/2000 | Train Loss: 0.004331 | Val Loss: 0.005533 | Val Phy Loss: 0.933053 | Gap: 0.001202 | Best: 284
+2026-05-06 11:50:59 | INFO     | src.train | Epoch 320/2000 | Train Loss: 0.004312 | Val Loss: 0.005412 | Val Phy Loss: 0.976476 | Gap: 0.001100 | Best: 284
+2026-05-06 11:51:02 | INFO     | src.train | Epoch 330/2000 | Train Loss: 0.004470 | Val Loss: 0.005440 | Val Phy Loss: 0.958525 | Gap: 0.000970 | Best: 284
+2026-05-06 11:51:06 | INFO     | src.train | Epoch 340/2000 | Train Loss: 0.004328 | Val Loss: 0.005486 | Val Phy Loss: 1.112064 | Gap: 0.001158 | Best: 284
+2026-05-06 11:51:09 | INFO     | src.train | Epoch 350/2000 | Train Loss: 0.004334 | Val Loss: 0.005435 | Val Phy Loss: 1.032781 | Gap: 0.001101 | Best: 343
+2026-05-06 11:51:13 | INFO     | src.train | Epoch 360/2000 | Train Loss: 0.004369 | Val Loss: 0.005457 | Val Phy Loss: 0.956785 | Gap: 0.001088 | Best: 343
+2026-05-06 11:51:16 | INFO     | src.train | Epoch 370/2000 | Train Loss: 0.004323 | Val Loss: 0.005463 | Val Phy Loss: 1.003716 | Gap: 0.001140 | Best: 343
+2026-05-06 11:51:20 | INFO     | src.train | Epoch 380/2000 | Train Loss: 0.004312 | Val Loss: 0.005389 | Val Phy Loss: 1.040682 | Gap: 0.001077 | Best: 343
+2026-05-06 11:51:23 | INFO     | src.train | Epoch 390/2000 | Train Loss: 0.004295 | Val Loss: 0.005447 | Val Phy Loss: 1.242792 | Gap: 0.001152 | Best: 380
+2026-05-06 11:51:27 | INFO     | src.train | Epoch 400/2000 | Train Loss: 0.004290 | Val Loss: 0.005423 | Val Phy Loss: 1.039842 | Gap: 0.001133 | Best: 380
+2026-05-06 11:51:31 | INFO     | src.train | Epoch 410/2000 | Train Loss: 0.004303 | Val Loss: 0.005385 | Val Phy Loss: 1.003348 | Gap: 0.001082 | Best: 408
+2026-05-06 11:51:35 | INFO     | src.train | Epoch 420/2000 | Train Loss: 0.004347 | Val Loss: 0.005485 | Val Phy Loss: 1.051866 | Gap: 0.001138 | Best: 408
+2026-05-06 11:51:38 | INFO     | src.train | Epoch 430/2000 | Train Loss: 0.004347 | Val Loss: 0.005507 | Val Phy Loss: 1.804799 | Gap: 0.001160 | Best: 408
+2026-05-06 11:51:42 | INFO     | src.train | Epoch 440/2000 | Train Loss: 0.004310 | Val Loss: 0.005426 | Val Phy Loss: 1.035181 | Gap: 0.001115 | Best: 408
+2026-05-06 11:51:46 | INFO     | src.train | Epoch 450/2000 | Train Loss: 0.004308 | Val Loss: 0.005403 | Val Phy Loss: 1.077372 | Gap: 0.001095 | Best: 408
+2026-05-06 11:51:49 | INFO     | src.train | Epoch 460/2000 | Train Loss: 0.004280 | Val Loss: 0.005408 | Val Phy Loss: 1.075578 | Gap: 0.001127 | Best: 408
+2026-05-06 11:51:53 | INFO     | src.train | Epoch 470/2000 | Train Loss: 0.004281 | Val Loss: 0.005382 | Val Phy Loss: 1.038245 | Gap: 0.001101 | Best: 408
+2026-05-06 11:51:57 | INFO     | src.train | Epoch 480/2000 | Train Loss: 0.004340 | Val Loss: 0.005562 | Val Phy Loss: 1.088963 | Gap: 0.001222 | Best: 408
+2026-05-06 11:52:00 | INFO     | src.train | Epoch 490/2000 | Train Loss: 0.004319 | Val Loss: 0.005402 | Val Phy Loss: 1.105952 | Gap: 0.001083 | Best: 408
+2026-05-06 11:52:04 | INFO     | src.train | Epoch 500/2000 | Train Loss: 0.004285 | Val Loss: 0.005389 | Val Phy Loss: 1.191294 | Gap: 0.001104 | Best: 408
+2026-05-06 11:52:07 | INFO     | src.train | Early stopping at epoch 508. Best epoch was 408.
+2026-05-06 11:52:07 | INFO     | src.train | Loaded best model from epoch 408
+2026-05-06 11:52:07 | INFO     | __main__ | Physics-Informed trained. Best epoch: 408
+2026-05-06 11:52:07 | INFO     | __main__ | === Training Standard Model ===
+2026-05-06 11:52:07 | INFO     | src.utils | All random seeds set to: 42
+2026-05-06 11:52:07 | INFO     | src.utils | CUDA deterministic mode: True
+2026-05-06 11:52:07 | INFO     | src.utils | CUDA benchmark mode: False
+2026-05-06 11:52:10 | INFO     | src.train | Epoch 010/2000 | Train Loss: 0.005243 | Val Loss: 0.007080 | Val Phy Loss: 0.000000 | Gap: 0.001838 | Best: 9
+2026-05-06 11:52:12 | INFO     | src.train | Epoch 020/2000 | Train Loss: 0.004755 | Val Loss: 0.005921 | Val Phy Loss: 0.000000 | Gap: 0.001167 | Best: 15
+2026-05-06 11:52:15 | INFO     | src.train | Epoch 030/2000 | Train Loss: 0.004972 | Val Loss: 0.006427 | Val Phy Loss: 0.000000 | Gap: 0.001455 | Best: 23
+2026-05-06 11:52:17 | INFO     | src.train | Epoch 040/2000 | Train Loss: 0.004622 | Val Loss: 0.005877 | Val Phy Loss: 0.000000 | Gap: 0.001255 | Best: 23
+2026-05-06 11:52:20 | INFO     | src.train | Epoch 050/2000 | Train Loss: 0.005200 | Val Loss: 0.006684 | Val Phy Loss: 0.000000 | Gap: 0.001483 | Best: 40
+2026-05-06 11:52:22 | INFO     | src.train | Epoch 060/2000 | Train Loss: 0.004752 | Val Loss: 0.005941 | Val Phy Loss: 0.000000 | Gap: 0.001190 | Best: 40
+2026-05-06 11:52:25 | INFO     | src.train | Epoch 070/2000 | Train Loss: 0.004854 | Val Loss: 0.006188 | Val Phy Loss: 0.000000 | Gap: 0.001334 | Best: 64
+2026-05-06 11:52:27 | INFO     | src.train | Epoch 080/2000 | Train Loss: 0.004511 | Val Loss: 0.005746 | Val Phy Loss: 0.000000 | Gap: 0.001235 | Best: 64
+2026-05-06 11:52:30 | INFO     | src.train | Epoch 090/2000 | Train Loss: 0.004417 | Val Loss: 0.005698 | Val Phy Loss: 0.000000 | Gap: 0.001281 | Best: 89
+2026-05-06 11:52:32 | INFO     | src.train | Epoch 100/2000 | Train Loss: 0.004814 | Val Loss: 0.005751 | Val Phy Loss: 0.000000 | Gap: 0.000937 | Best: 95
+2026-05-06 11:52:35 | INFO     | src.train | Epoch 110/2000 | Train Loss: 0.004402 | Val Loss: 0.005738 | Val Phy Loss: 0.000000 | Gap: 0.001336 | Best: 108
+2026-05-06 11:52:37 | INFO     | src.train | Epoch 120/2000 | Train Loss: 0.004360 | Val Loss: 0.005535 | Val Phy Loss: 0.000000 | Gap: 0.001174 | Best: 115
+2026-05-06 11:52:40 | INFO     | src.train | Epoch 130/2000 | Train Loss: 0.004295 | Val Loss: 0.005384 | Val Phy Loss: 0.000000 | Gap: 0.001089 | Best: 127
+2026-05-06 11:52:42 | INFO     | src.train | Epoch 140/2000 | Train Loss: 0.004212 | Val Loss: 0.005317 | Val Phy Loss: 0.000000 | Gap: 0.001104 | Best: 127
+2026-05-06 11:52:45 | INFO     | src.train | Epoch 150/2000 | Train Loss: 0.004358 | Val Loss: 0.005358 | Val Phy Loss: 0.000000 | Gap: 0.000999 | Best: 140
+2026-05-06 11:52:47 | INFO     | src.train | Epoch 160/2000 | Train Loss: 0.004172 | Val Loss: 0.005346 | Val Phy Loss: 0.000000 | Gap: 0.001174 | Best: 140
+2026-05-06 11:52:50 | INFO     | src.train | Epoch 170/2000 | Train Loss: 0.004216 | Val Loss: 0.005299 | Val Phy Loss: 0.000000 | Gap: 0.001083 | Best: 166
+2026-05-06 11:52:52 | INFO     | src.train | Epoch 180/2000 | Train Loss: 0.004272 | Val Loss: 0.005345 | Val Phy Loss: 0.000000 | Gap: 0.001073 | Best: 166
+2026-05-06 11:52:55 | INFO     | src.train | Epoch 190/2000 | Train Loss: 0.004137 | Val Loss: 0.005092 | Val Phy Loss: 0.000000 | Gap: 0.000956 | Best: 187
+2026-05-06 11:52:57 | INFO     | src.train | Epoch 200/2000 | Train Loss: 0.003902 | Val Loss: 0.004991 | Val Phy Loss: 0.000000 | Gap: 0.001089 | Best: 192
+2026-05-06 11:53:00 | INFO     | src.train | Epoch 210/2000 | Train Loss: 0.004249 | Val Loss: 0.005104 | Val Phy Loss: 0.000000 | Gap: 0.000855 | Best: 201
+2026-05-06 11:53:03 | INFO     | src.train | Epoch 220/2000 | Train Loss: 0.003937 | Val Loss: 0.005126 | Val Phy Loss: 0.000000 | Gap: 0.001189 | Best: 218
+2026-05-06 11:53:05 | INFO     | src.train | Epoch 230/2000 | Train Loss: 0.003824 | Val Loss: 0.005210 | Val Phy Loss: 0.000000 | Gap: 0.001386 | Best: 228
+2026-05-06 11:53:08 | INFO     | src.train | Epoch 240/2000 | Train Loss: 0.003626 | Val Loss: 0.004728 | Val Phy Loss: 0.000000 | Gap: 0.001102 | Best: 239
+2026-05-06 11:53:10 | INFO     | src.train | Epoch 250/2000 | Train Loss: 0.003726 | Val Loss: 0.004822 | Val Phy Loss: 0.000000 | Gap: 0.001096 | Best: 249
+2026-05-06 11:53:13 | INFO     | src.train | Epoch 260/2000 | Train Loss: 0.003598 | Val Loss: 0.004487 | Val Phy Loss: 0.000000 | Gap: 0.000889 | Best: 255
+2026-05-06 11:53:15 | INFO     | src.train | Epoch 270/2000 | Train Loss: 0.003366 | Val Loss: 0.004364 | Val Phy Loss: 0.000000 | Gap: 0.000998 | Best: 269
+2026-05-06 11:53:18 | INFO     | src.train | Epoch 280/2000 | Train Loss: 0.003463 | Val Loss: 0.004736 | Val Phy Loss: 0.000000 | Gap: 0.001274 | Best: 277
+2026-05-06 11:53:20 | INFO     | src.train | Epoch 290/2000 | Train Loss: 0.003323 | Val Loss: 0.004547 | Val Phy Loss: 0.000000 | Gap: 0.001224 | Best: 283
+2026-05-06 11:53:23 | INFO     | src.train | Epoch 300/2000 | Train Loss: 0.003134 | Val Loss: 0.004154 | Val Phy Loss: 0.000000 | Gap: 0.001020 | Best: 299
+2026-05-06 11:53:25 | INFO     | src.train | Epoch 310/2000 | Train Loss: 0.003091 | Val Loss: 0.004141 | Val Phy Loss: 0.000000 | Gap: 0.001050 | Best: 304
+2026-05-06 11:53:28 | INFO     | src.train | Epoch 320/2000 | Train Loss: 0.002999 | Val Loss: 0.004060 | Val Phy Loss: 0.000000 | Gap: 0.001061 | Best: 317
+2026-05-06 11:53:30 | INFO     | src.train | Epoch 330/2000 | Train Loss: 0.003083 | Val Loss: 0.004081 | Val Phy Loss: 0.000000 | Gap: 0.000998 | Best: 317
+2026-05-06 11:53:33 | INFO     | src.train | Epoch 340/2000 | Train Loss: 0.002892 | Val Loss: 0.003960 | Val Phy Loss: 0.000000 | Gap: 0.001068 | Best: 338
+2026-05-06 11:53:35 | INFO     | src.train | Epoch 350/2000 | Train Loss: 0.002848 | Val Loss: 0.004018 | Val Phy Loss: 0.000000 | Gap: 0.001170 | Best: 340
+2026-05-06 11:53:38 | INFO     | src.train | Epoch 360/2000 | Train Loss: 0.002768 | Val Loss: 0.004068 | Val Phy Loss: 0.000000 | Gap: 0.001300 | Best: 340
+2026-05-06 11:53:40 | INFO     | src.train | Epoch 370/2000 | Train Loss: 0.002686 | Val Loss: 0.004130 | Val Phy Loss: 0.000000 | Gap: 0.001444 | Best: 340
+2026-05-06 11:53:43 | INFO     | src.train | Epoch 380/2000 | Train Loss: 0.002695 | Val Loss: 0.004354 | Val Phy Loss: 0.000000 | Gap: 0.001659 | Best: 340
+2026-05-06 11:53:45 | INFO     | src.train | Epoch 390/2000 | Train Loss: 0.002569 | Val Loss: 0.004117 | Val Phy Loss: 0.000000 | Gap: 0.001548 | Best: 340
+2026-05-06 11:53:48 | INFO     | src.train | Epoch 400/2000 | Train Loss: 0.002545 | Val Loss: 0.004159 | Val Phy Loss: 0.000000 | Gap: 0.001614 | Best: 340
+2026-05-06 11:53:50 | INFO     | src.train | Epoch 410/2000 | Train Loss: 0.002420 | Val Loss: 0.004038 | Val Phy Loss: 0.000000 | Gap: 0.001618 | Best: 340
+2026-05-06 11:53:53 | INFO     | src.train | Epoch 420/2000 | Train Loss: 0.002346 | Val Loss: 0.004127 | Val Phy Loss: 0.000000 | Gap: 0.001781 | Best: 340
+2026-05-06 11:53:55 | INFO     | src.train | Epoch 430/2000 | Train Loss: 0.002326 | Val Loss: 0.004377 | Val Phy Loss: 0.000000 | Gap: 0.002050 | Best: 340
+2026-05-06 11:53:58 | INFO     | src.train | Epoch 440/2000 | Train Loss: 0.002411 | Val Loss: 0.004193 | Val Phy Loss: 0.000000 | Gap: 0.001782 | Best: 340
+2026-05-06 11:53:58 | INFO     | src.train | Early stopping at epoch 440. Best epoch was 340.
+2026-05-06 11:53:58 | INFO     | src.train | Loaded best model from epoch 340
+2026-05-06 11:53:58 | INFO     | __main__ | Standard trained. Best epoch: 340
+2026-05-06 11:53:58 | INFO     | __main__ | Saved model checkpoint to results/saved_models/lstm_autoencoder_standard.pt
+2026-05-06 11:53:58 | INFO     | __main__ | Saved model checkpoint to results/saved_models/lstm_autoencoder_pinn.pt
+2026-05-06 11:53:58 | INFO     | __main__ | === 2b. Plotting Training Diagnostics ===
+2026-05-06 11:53:58 | INFO     | src.visualise | Saved loss curves → results/training_loss_curves.png
+2026-05-06 11:53:58 | INFO     | src.visualise | Saved reconstruction samples → results/training_reconstruction_samples.png
+2026-05-06 11:53:58 | INFO     | __main__ | === 3. Fitting Threshold Bundles ===
+2026-05-06 11:53:59 | INFO     | src.threshold | Saved threshold bundle to results/threshold_bundle_pinn.npy
+2026-05-06 11:53:59 | INFO     | src.threshold | Threshold (p99) = 0.010905  |  clean scores: median=0.004972  max=0.014451
+2026-05-06 11:53:59 | INFO     | src.threshold | Saved threshold bundle to results/threshold_bundle_standard.npy
+2026-05-06 11:53:59 | INFO     | src.threshold | Threshold (p99) = 0.010831  |  clean scores: median=0.003740  max=0.017957
+2026-05-06 11:53:59 | INFO     | __main__ | === 4. Generating Test Baseline Signal ===
+2026-05-06 11:53:59 | INFO     | __main__ | === 5. Running Comprehensive Anomaly Test Suite ===
+2026-05-06 11:53:59 | INFO     | src.test_suite_runner | === Running Anomaly Test Suite for Physics-Informed ===
+2026-05-06 11:53:59 | INFO     | src.test_suite_runner | Testing: baseline...
+2026-05-06 11:53:59 | INFO     | src.test_suite_runner | Testing: amplitude_spikes...
+2026-05-06 11:54:00 | INFO     | src.test_suite_runner | Testing: frequency_violations...
+2026-05-06 11:54:00 | INFO     | src.test_suite_runner | Testing: phase_discontinuities...
+2026-05-06 11:54:00 | INFO     | src.test_suite_runner | Testing: damping_violations...
+2026-05-06 11:54:01 | INFO     | src.test_suite_runner | Testing: missing_data...
+2026-05-06 11:54:01 | INFO     | src.test_suite_runner | Testing: white_noise_bursts...
+2026-05-06 11:54:01 | INFO     | src.test_suite_runner | Testing: harmonic_contamination...
+2026-05-06 11:54:01 | INFO     | src.test_suite_runner | Testing: dc_offset_shifts...
+2026-05-06 11:54:02 | INFO     | src.test_suite_runner | Testing: amplitude_modulation...
+2026-05-06 11:54:02 | INFO     | src.test_suite_runner | Completed 10 anomaly tests.
 
-2026-05-05 08:39:25 | INFO     | src.test_suite_runner | === Running Anomaly Test Suite for Standard ===
-2026-05-05 08:39:25 | INFO     | src.test_suite_runner | Testing: baseline...
-2026-05-05 08:39:25 | INFO     | src.test_suite_runner | Testing: amplitude_spikes...
-2026-05-05 08:39:26 | INFO     | src.test_suite_runner | Testing: frequency_violations...
-2026-05-05 08:39:27 | INFO     | src.test_suite_runner | Testing: phase_discontinuities...
-2026-05-05 08:39:27 | INFO     | src.test_suite_runner | Testing: damping_violations...
-2026-05-05 08:39:28 | INFO     | src.test_suite_runner | Testing: missing_data...
-2026-05-05 08:39:28 | INFO     | src.test_suite_runner | Testing: white_noise_bursts...
-2026-05-05 08:39:29 | INFO     | src.test_suite_runner | Testing: harmonic_contamination...
-2026-05-05 08:39:29 | INFO     | src.test_suite_runner | Testing: dc_offset_shifts...
-2026-05-05 08:39:30 | INFO     | src.test_suite_runner | Testing: amplitude_modulation...
-2026-05-05 08:39:30 | INFO     | src.test_suite_runner | Completed 10 anomaly tests.
+2026-05-06 11:54:02 | INFO     | src.test_suite_runner | === Running Anomaly Test Suite for Standard ===
+2026-05-06 11:54:02 | INFO     | src.test_suite_runner | Testing: baseline...
+2026-05-06 11:54:02 | INFO     | src.test_suite_runner | Testing: amplitude_spikes...
+2026-05-06 11:54:03 | INFO     | src.test_suite_runner | Testing: frequency_violations...
+2026-05-06 11:54:03 | INFO     | src.test_suite_runner | Testing: phase_discontinuities...
+2026-05-06 11:54:03 | INFO     | src.test_suite_runner | Testing: damping_violations...
+2026-05-06 11:54:04 | INFO     | src.test_suite_runner | Testing: missing_data...
+2026-05-06 11:54:04 | INFO     | src.test_suite_runner | Testing: white_noise_bursts...
+2026-05-06 11:54:04 | INFO     | src.test_suite_runner | Testing: harmonic_contamination...
+2026-05-06 11:54:05 | INFO     | src.test_suite_runner | Testing: dc_offset_shifts...
+2026-05-06 11:54:05 | INFO     | src.test_suite_runner | Testing: amplitude_modulation...
+2026-05-06 11:54:05 | INFO     | src.test_suite_runner | Completed 10 anomaly tests.
 
-2026-05-05 08:39:30 | INFO     | __main__ | === 6. Running Detection Evaluation ===
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | amplitude_spikes — AUC=1.000  P=0.031  R=1.000  F1=0.060  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | amplitude_spikes — AUC=1.000  P=0.055  R=1.000  F1=0.105  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | frequency_violations — AUC=1.000  P=0.051  R=1.000  F1=0.096  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | frequency_violations — AUC=1.000  P=0.088  R=1.000  F1=0.162  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | phase_discontinuities — AUC=0.972  P=0.031  R=1.000  F1=0.060  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | phase_discontinuities — AUC=0.976  P=0.051  R=0.967  F1=0.096  latency=1
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | damping_violations — AUC=0.941  P=0.060  R=0.983  F1=0.113  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | damping_violations — AUC=0.881  P=0.089  R=0.881  F1=0.161  latency=7
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | missing_data — AUC=1.000  P=0.045  R=1.000  F1=0.087  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | missing_data — AUC=0.865  P=0.074  R=0.909  F1=0.137  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | white_noise_bursts — AUC=0.976  P=0.051  R=1.000  F1=0.096  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | white_noise_bursts — AUC=0.747  P=0.070  R=0.796  F1=0.129  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | harmonic_contamination — AUC=0.999  P=0.061  R=1.000  F1=0.115  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | harmonic_contamination — AUC=0.567  P=0.061  R=0.542  F1=0.110  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | dc_offset_shifts — AUC=0.943  P=0.082  R=1.000  F1=0.151  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | dc_offset_shifts — AUC=0.367  P=0.059  R=0.430  F1=0.104  latency=1
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | physics_informed | amplitude_modulation — AUC=0.250  P=0.071  R=1.000  F1=0.133  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | standard | amplitude_modulation — AUC=0.377  P=0.052  R=0.406  F1=0.092  latency=0
-2026-05-05 08:39:30 | INFO     | src.detection_metrics | Saved detection evaluation to results/detection_evaluation.csv
-2026-05-05 08:39:30 | INFO     | __main__ | === 8. Generating Visualizations ===
-2026-05-05 08:39:30 | INFO     | src.visualise | === Generating Comprehensive Test Suite Report ===
-2026-05-05 08:39:34 | INFO     | src.visualise | Saved: 2d_scatter_comparison.png
-2026-05-05 08:39:39 | INFO     | src.visualise | Saved: heatmaps_physics-informed.png
-2026-05-05 08:39:43 | INFO     | src.visualise | Saved: heatmaps_standard.png
-2026-05-05 08:39:49 | INFO     | src.visualise | Saved: reconstruction_grid_physics-informed.png
-2026-05-05 08:39:56 | INFO     | src.visualise | Saved: reconstruction_grid_standard.png
-2026-05-05 08:40:03 | INFO     | src.visualise | Saved: reconstruction_grid_overlay.png
-2026-05-05 08:40:05 | INFO     | src.visualise | Saved: reconstruction_grid_overlay.png
-2026-05-05 08:40:09 | INFO     | src.visualise | Saved: loss_distributions_boxplot.png
-2026-05-05 08:40:11 | INFO     | src.visualise | Saved: aggregated_metrics_comparison.png
-2026-05-05 08:40:11 | INFO     | src.visualise | === Report Generation Complete ===
+2026-05-06 11:54:05 | INFO     | __main__ | === 6. Running Detection Evaluation ===
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | amplitude_spikes — AUC=1.000  P=0.091  R=1.000  F1=0.167  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | amplitude_spikes — AUC=1.000  P=0.312  R=1.000  F1=0.476  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | frequency_violations — AUC=0.994  P=0.141  R=1.000  F1=0.247  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | frequency_violations — AUC=0.766  P=0.305  R=0.592  F1=0.403  latency=20
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | phase_discontinuities — AUC=0.980  P=0.087  R=0.967  F1=0.159  latency=1
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | phase_discontinuities — AUC=0.967  P=0.302  R=0.967  F1=0.460  latency=1
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | damping_violations — AUC=0.936  P=0.150  R=0.915  F1=0.258  latency=5
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | damping_violations — AUC=0.936  P=0.445  R=0.898  F1=0.596  latency=6
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | missing_data — AUC=1.000  P=0.141  R=1.000  F1=0.247  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | missing_data — AUC=0.998  P=0.478  R=0.977  F1=0.642  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | white_noise_bursts — AUC=0.985  P=0.147  R=0.980  F1=0.256  latency=1
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | white_noise_bursts — AUC=0.961  P=0.414  R=0.939  F1=0.575  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | harmonic_contamination — AUC=0.975  P=0.188  R=1.000  F1=0.316  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | harmonic_contamination — AUC=0.856  P=0.381  R=0.542  F1=0.448  latency=0
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | dc_offset_shifts — AUC=0.747  P=0.147  R=0.608  F1=0.237  latency=1
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | dc_offset_shifts — AUC=0.631  P=0.000  R=0.000  F1=0.000  latency=134
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | physics_informed | amplitude_modulation — AUC=0.275  P=0.000  R=0.000  F1=0.000  latency=137
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | standard | amplitude_modulation — AUC=0.320  P=0.000  R=0.000  F1=0.000  latency=172
+2026-05-06 11:54:05 | INFO     | src.detection_metrics | Saved detection evaluation to results/detection_evaluation.csv
+2026-05-06 11:54:05 | INFO     | __main__ | === 8. Generating Visualizations ===
+2026-05-06 11:54:05 | INFO     | src.visualise | === Generating Comprehensive Test Suite Report ===
+2026-05-06 11:54:07 | INFO     | src.visualise | Saved: 2d_scatter_comparison.png
+2026-05-06 11:54:09 | INFO     | src.visualise | Saved: heatmaps_physics-informed.png
+2026-05-06 11:54:11 | INFO     | src.visualise | Saved: heatmaps_standard.png
+2026-05-06 11:54:13 | INFO     | src.visualise | Saved: reconstruction_grid_physics-informed.png
+2026-05-06 11:54:16 | INFO     | src.visualise | Saved: reconstruction_grid_standard.png
+2026-05-06 11:54:18 | INFO     | src.visualise | Saved: reconstruction_grid_overlay.png
+2026-05-06 11:54:19 | INFO     | src.visualise | Saved: reconstruction_grid_overlay.png
+2026-05-06 11:54:20 | INFO     | src.visualise | Saved: loss_distributions_boxplot.png
+2026-05-06 11:54:21 | INFO     | src.visualise | Saved: aggregated_metrics_comparison.png
+2026-05-06 11:54:21 | INFO     | src.visualise | === Report Generation Complete ===
 
-2026-05-05 08:40:14 | INFO     | src.visualise | Saved: 2d_scatter_with_threshold.png
-2026-05-05 08:40:19 | INFO     | src.visualise | Saved: roc_curves.png
-2026-05-05 08:40:23 | INFO     | src.visualise | Saved: score_distributions.png
-2026-05-05 08:40:23 | INFO     | __main__ | === 8. Quantitative Analysis ===
-2026-05-05 08:40:23 | INFO     | src.quantitative_metrics | ======================================================================
-2026-05-05 08:40:23 | INFO     | src.quantitative_metrics | QUANTITATIVE SEPARATION ANALYSIS
-2026-05-05 08:40:23 | INFO     | src.quantitative_metrics | ======================================================================
-2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | === Physics-Informed Separation Metrics ===
-2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | Silhouette Score: -0.0614 (higher is better, range [-1, 1])
-2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | Davies-Bouldin Index: 37.0370 (lower is better)
-2026-05-05 08:40:25 | INFO     | src.quantitative_metrics | Calinski-Harabasz Index: 1054.25 (higher is better)
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | === Standard Separation Metrics ===
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Silhouette Score: -0.0033 (higher is better, range [-1, 1])
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Davies-Bouldin Index: 163.1834 (lower is better)
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Calinski-Harabasz Index: 252.64 (higher is better)
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | ----------------------------------------------------------------------
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | INTERPRETATION:
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | ----------------------------------------------------------------------
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Silhouette improvement: + -0.0581
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Davies-Bouldin improvement: + 126.1464
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Models show similar separation quality
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | === Physics-Informed Pairwise Separability (Mahalanobis Distance) ===
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Larger values indicate better separation between anomaly types
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | === Standard Pairwise Separability (Mahalanobis Distance) ===
-2026-05-05 08:40:27 | INFO     | src.quantitative_metrics | Larger values indicate better separation between anomaly types
-2026-05-05 08:40:28 | INFO     | src.quantitative_metrics | Saved: separability_heatmap_physics_informed.png
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | Saved: separability_heatmap_standard.png
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | Average pairwise separation:
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics |   Physics-Informed: 1.013
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics |   Standard:         0.590
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics |   Improvement:      + 71.6%
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | === Physics Loss Reduction Analysis ===
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | baseline                 :     50.0x reduction ( 98.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | amplitude_spikes         :  41218.0x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | frequency_violations     :   2384.6x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | phase_discontinuities    :  19858.7x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | damping_violations       :    699.5x reduction ( 99.9% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | missing_data             :   6077.0x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | white_noise_bursts       :  18916.0x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | harmonic_contamination   :  19082.1x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | dc_offset_shifts         :  34482.5x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | amplitude_modulation     :  52709.8x reduction (100.0% decrease)
-2026-05-05 08:40:29 | INFO     | src.quantitative_metrics | OVERALL                  :   1615.8x reduction ( 99.9% decrease)
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | === Macro-class Classification Accuracy (anomalous windows only) ===
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | 3 classes, random baseline 33%
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | Physics-Informed: 0.693 +/- 0.241
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | Standard:         0.716 +/- 0.112
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | Improvement:      -2.3 percentage points
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | ======================================================================
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | ANALYSIS COMPLETE
-2026-05-05 08:40:30 | INFO     | src.quantitative_metrics | ======================================================================
-2026-05-05 08:40:31 | INFO     | src.visualise | Saved: macro_class_confusion.png
-2026-05-05 08:40:34 | INFO     | src.visualise | Saved: micro_class_confusion.png
-2026-05-05 08:40:34 | INFO     | __main__ | === 9. End-to-end Pipeline Classification Evaluation ===
-2026-05-05 08:40:35 | INFO     | src.detection_metrics | e2e [physics_informed] (kNN): 467 / 468 true-anomalous windows detected (99.8%)
-2026-05-05 08:40:35 | INFO     | src.detection_metrics | e2e [standard] (kNN): 333 / 468 true-anomalous windows detected (71.2%)
-2026-05-05 08:40:38 | INFO     | src.visualise | Saved: e2e_confusion.png
-2026-05-05 08:40:38 | INFO     | __main__ | === Test Suite Complete ===
-2026-05-05 08:40:38 | INFO     | __main__ | All results saved to: results
+2026-05-06 11:54:22 | INFO     | src.visualise | Saved: 2d_scatter_with_threshold.png
+2026-05-06 11:54:24 | INFO     | src.visualise | Saved: roc_curves.png
+2026-05-06 11:54:25 | INFO     | src.visualise | Saved: score_distributions.png
+2026-05-06 11:54:25 | INFO     | __main__ | === 8. Quantitative Analysis ===
+2026-05-06 11:54:25 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-06 11:54:25 | INFO     | src.quantitative_metrics | QUANTITATIVE SEPARATION ANALYSIS
+2026-05-06 11:54:25 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-06 11:54:26 | INFO     | src.quantitative_metrics | === Physics-Informed Separation Metrics ===
+2026-05-06 11:54:26 | INFO     | src.quantitative_metrics | Silhouette Score: -0.0208 (higher is better, range [-1, 1])
+2026-05-06 11:54:26 | INFO     | src.quantitative_metrics | Davies-Bouldin Index: 70.0252 (lower is better)
+2026-05-06 11:54:26 | INFO     | src.quantitative_metrics | Calinski-Harabasz Index: 670.26 (higher is better)
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | === Standard Separation Metrics ===
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Silhouette Score: 0.0110 (higher is better, range [-1, 1])
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Davies-Bouldin Index: 121.3656 (lower is better)
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Calinski-Harabasz Index: 1694.75 (higher is better)
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | ----------------------------------------------------------------------
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | INTERPRETATION:
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | ----------------------------------------------------------------------
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Silhouette improvement: + -0.0318
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Davies-Bouldin improvement: + 51.3403
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Models show similar separation quality
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | === Physics-Informed Pairwise Separability (Mahalanobis Distance) ===
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Larger values indicate better separation between anomaly types
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | === Standard Pairwise Separability (Mahalanobis Distance) ===
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Larger values indicate better separation between anomaly types
+2026-05-06 11:54:27 | INFO     | src.quantitative_metrics | Saved: separability_heatmap_physics_informed.png
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | Saved: separability_heatmap_standard.png
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | Average pairwise separation:
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics |   Physics-Informed: 1.723
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics |   Standard:         1.514
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics |   Improvement:      + 13.8%
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | === Physics Loss Reduction Analysis ===
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | baseline                 :    613.9x reduction ( 99.8% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | amplitude_spikes         :  20578.0x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | frequency_violations     :  14865.1x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | phase_discontinuities    :  16847.6x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | damping_violations       :    171.6x reduction ( 99.4% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | missing_data             :  10618.4x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | white_noise_bursts       :  14499.3x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | harmonic_contamination   :  16351.0x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | dc_offset_shifts         :  21063.0x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | amplitude_modulation     :  22309.6x reduction (100.0% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | OVERALL                  :   1113.2x reduction ( 99.9% decrease)
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | === Macro-class Classification Accuracy (anomalous windows only) ===
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | 3 classes, random baseline 33%
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | Physics-Informed: 0.684 +/- 0.156
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | Standard:         0.682 +/- 0.131
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | Improvement:      0.2 percentage points
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | ANALYSIS COMPLETE
+2026-05-06 11:54:28 | INFO     | src.quantitative_metrics | ======================================================================
+2026-05-06 11:54:28 | INFO     | src.visualise | Saved: macro_class_confusion.png
+2026-05-06 11:54:29 | INFO     | src.visualise | Saved: micro_class_confusion.png
+2026-05-06 11:54:29 | INFO     | __main__ | === 9. End-to-end Pipeline Classification Evaluation ===
+2026-05-06 11:54:29 | INFO     | src.detection_metrics | e2e [physics_informed] (kNN): 361 / 468 true-anomalous windows detected (77.1%)
+2026-05-06 11:54:29 | INFO     | src.detection_metrics | e2e [standard] (kNN): 262 / 468 true-anomalous windows detected (56.0%)
+2026-05-06 11:54:30 | INFO     | src.visualise | Saved: e2e_confusion.png
+2026-05-06 11:54:30 | INFO     | __main__ | === Test Suite Complete ===
+2026-05-06 11:54:30 | INFO     | __main__ | All results saved to: results

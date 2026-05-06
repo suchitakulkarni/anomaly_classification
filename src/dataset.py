@@ -265,6 +265,61 @@ def inject_combined_physics_violations(x, num_anomalies=10, omega_base=2.0, dt=0
     return x_anomalous, anomaly_dict
 
 
+def build_multi_segment_dataset(num_segments, timesteps_per_segment, dt,
+                                omega_range, noise_range, window_size,
+                                scaler=None, seed=0):
+    """
+    Generate a dataset of rolling windows drawn from independent segments,
+    each with its own omega and noise level sampled from the given ranges.
+
+    Segments are windowed individually so no window ever spans a segment
+    boundary (avoiding mixed-omega windows).
+
+    Returns:
+        windows_np  : float32 array (N, window_size, 1)
+        omega_np    : float32 array (N,) — omega label per window
+        scaler      : fitted StandardScaler (from training data if scaler=None)
+    """
+    from sklearn.preprocessing import StandardScaler
+
+    rng = np.random.default_rng(seed)
+    omegas = rng.uniform(*omega_range, size=num_segments)
+    noises = rng.uniform(*noise_range, size=num_segments)
+    amplitudes = rng.uniform(2.0, 4.0, size=num_segments)
+    phases = rng.uniform(0, 2 * np.pi, size=num_segments)
+
+    raw_segments = []
+    for i in range(num_segments):
+        seg = simulate_harmonic_oscillator(
+            timesteps=timesteps_per_segment,
+            dt=dt,
+            omega=omegas[i],
+            noise_std=0.0,       # add noise below via local rng
+            seed=None,
+            amplitude=amplitudes[i],
+            phase=phases[i],
+        )
+        seg = seg + rng.normal(0, noises[i], timesteps_per_segment)
+        raw_segments.append(seg)
+
+    if scaler is None:
+        all_raw = np.concatenate(raw_segments).reshape(-1, 1)
+        scaler = StandardScaler()
+        scaler.fit(all_raw)
+
+    all_windows = []
+    all_omegas = []
+    for i, seg in enumerate(raw_segments):
+        scaled = scaler.transform(seg.reshape(-1, 1)).flatten()
+        wins = create_rolling_windows(scaled, window_size)   # (n_wins, window_size)
+        all_windows.append(wins[:, :, np.newaxis])           # (n_wins, window_size, 1)
+        all_omegas.append(np.full(len(wins), omegas[i], dtype=np.float32))
+
+    windows_np = np.concatenate(all_windows, axis=0).astype(np.float32)
+    omega_np = np.concatenate(all_omegas, axis=0)
+    return windows_np, omega_np, scaler
+
+
 def create_rolling_windows(data, window_size):
     """Converts a 1D time series into a 2D array of overlapping sequences."""
     X = []

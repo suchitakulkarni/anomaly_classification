@@ -59,7 +59,7 @@ def run_anomaly_test_suite(config, model, x_clean, scaler, device,
     # and used only for post-hoc evaluation (never seen by the model).
     # dc_offset_shifts picks a random duration internally (randint(30,100)); 50 is the midpoint.
     anomaly_configs = [
-        ("baseline", simulate_harmonic_oscillator, {'dt':0.01, 'omega':2.0}, 0), ###### BE VERY VERY VERY VERY careful with this, these must be same as defaults of the signal generating function
+        ("baseline", simulate_harmonic_oscillator, {'dt': dt, 'omega': omega}, 0),
 
         ("amplitude_spikes", inject_amplitude_spikes,
          {"num_anomalies": 1, "severity": 5.0, "seed": config.RANDOM_STATE}, 1),

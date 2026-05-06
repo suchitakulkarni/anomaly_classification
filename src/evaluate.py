@@ -51,16 +51,17 @@ def evaluate_model_with_physics(model, data_loader, omega, dt, scaler, device, w
     with torch.no_grad():
         for batch_idx, data in enumerate(data_loader):
             data_window = data[0].to(device)
+            batch_omega = data[2].to(device)   # per-window omega, shape (batch,)
             reconstruction = model(data_window)
-            
+
             # Reconstruction error (MSE)
             mse_per_window = torch.mean((reconstruction - data_window) ** 2, dim=[1, 2])
             reco_errors.extend(mse_per_window.cpu().numpy())
-            
+
             # Physics error per window
             for i in range(reconstruction.shape[0]):
                 recon_single = reconstruction[i:i+1]  # Keep batch dim
-                phys_loss = calculate_physics_loss(recon_single, omega, dt, scaler)
+                phys_loss = calculate_physics_loss(recon_single, batch_omega[i:i+1], dt, scaler)
                 phys_errors.append(phys_loss.cpu().item())
                 
                 # Calculate window center index

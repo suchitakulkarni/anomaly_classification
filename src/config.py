@@ -5,36 +5,42 @@ class Config:
     Configuration settings for the Harmonic Oscillator Anomaly Detection Model.
     """
     # --- Reproducibility Settings ---
-    RANDOM_STATE = 42         # Master seed for reproducibility
-    
-    # --- Data Simulation Settings ---
-    TIMESTEPS = 1000          
-    DT = 0.01                 
-    OMEGA = 2.0               # Oscillation frequency
-    NUM_ANOMALIES = 1        # Number of anomalies original 20
-    SEVERITY = 2              # Perturbation strength original 0.5
-    NOISE = 0.1
-    SINGLE_FREQUENCY = True
+    RANDOM_STATE = 42
 
-    # --- Data Prep
-    WINDOW_SIZE = 30 #20           # Length of the rolling window sequence original is 20
-    BATCH_SIZE = 64 #64           
-    #TEST_SIZE = 0.3           
-    # RANDOM_STATE already defined above
+    # --- Training Data Settings ---
+    # Training signal is composed of NUM_SEGMENTS independent segments,
+    # each with omega and noise drawn uniformly from the ranges below.
+    TIMESTEPS_PER_SEGMENT = 500
+    NUM_SEGMENTS = 20              # 80% train / 20% val split by segment count
+    DT = 0.01
+    OMEGA_RANGE = (1.0, 4.0)
+    NOISE_RANGE = (0.05, 0.2)
+
+    # --- Test Signal Settings ---
+    # The test suite and threshold calibration use a fixed representative frequency.
+    TEST_OMEGA = 2.86
+    TEST_NOISE = 0.1
+    TIMESTEPS = 1000               # length of the test baseline signal
+
+    # --- Anomaly Injection Settings ---
+    NUM_ANOMALIES = 1
+    SEVERITY = 2
+
+    # --- Data Prep ---
+    WINDOW_SIZE = 30
+    BATCH_SIZE = 64
 
     # --- Model Hyperparameters ---
-    #HIDDEN_DIM = 256 #128 #256          # Single frequency use 256
-    HIDDEN_DIM = 128 #128 #256          # Multi frequency use 128
-    NUM_EPOCHS = 2000         # original was 50
-    LEARNING_RATE = 5e-5 #5e-4      # original was 1e-3
-    
+    HIDDEN_DIM = 128
+    NUM_EPOCHS = 2000
+    LEARNING_RATE = 1e-3
 
     # --- Loss Function Settings ---
-    RECONSTRUCTION_LOSS_WEIGHT = 1 #1.0 
-    # single frequency with or without noise, use physics weights around 1e-3
-    #PHYSICS_LOSS_WEIGHT = 0.001 #For single frequency weights around this range work great, all post plots are made with 0.004; increase this to 0.04 to see anomaly detection performance tank
-    PHYSICS_LOSS_WEIGHT = 0.004 #this makes anomaly detection for single frequency worse
-    #PHYSICS_LOSS_WEIGHT = 0.006 #For mixture of frequencies this is the current best
-    
+    RECONSTRUCTION_LOSS_WEIGHT = 1.0
+    # Physics residuals scale as omega^2, so with OMEGA_RANGE=(1,4) the residual
+    # magnitude varies ~16x across segments. Expect this weight to need retuning
+    # after switching to multi-frequency training.
+    PHYSICS_LOSS_WEIGHT = 1e-4 
+
     RESULTS_DIR = 'results'
-    os.makedirs(RESULTS_DIR, exist_ok = True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
