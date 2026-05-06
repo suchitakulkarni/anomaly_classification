@@ -123,4 +123,8 @@ kNN is a natural, interpretable choice that requires no additional hyperparamete
 The kNN classifier generalises only to anomaly types seen during training; it cannot classify
 anomaly types with no prior examples in the (log MSE, log physics loss) feature space.
 
+Currently the system is trained on a mixture of frequency, phase and amplitudes. However the ground thruth for frequencies is assumed to be known. This is used in the physics loss function. An alternative would be to use energy conservation in the loss function, one could also estimate frequency using FFT in real life.
+
+The supervised kNN approach also defeates the purpose of the pipeline (one could just use random forests to classify rather than expensive NN), use HDBSCAN or GMM for a more unsupervised clustering approach where new anomaly classes would be easily identified. 
+
 ---
