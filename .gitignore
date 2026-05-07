@@ -12,3 +12,4 @@ results/macro_class_confusion.png
 results/aggregated_metrics_comparison.png
 results/loss_distributions_boxplot.png
 interpretation.md
+GMM_interpretation.md

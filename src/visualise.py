@@ -1370,7 +1370,63 @@ def plot_micro_class_confusion(knn_data, save_dir="results"):
     logger.info("Saved: micro_class_confusion.png")
 
 
-def plot_e2e_confusion(e2e_data, save_dir="results"):
+def plot_gmm_precision_coverage(gmm_results, save_dir="results"):
+    """
+    Two subplots (macro / micro). Each shows PINN and Standard precision-coverage curves
+    with kNN supervised accuracy as a horizontal reference line.
+
+    X-axis: coverage = fraction of anomalous windows that get a label (not "uncertain").
+    Y-axis: precision = accuracy on the labelled subset.
+    Sweeping the confidence threshold from 0 → 1 traces the curve right → left.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    for ax, level in zip(axes, ['macro', 'micro']):
+        res = gmm_results[level]
+
+        _, cov_p, prec_p = res['curve_pinn']
+        _, cov_s, prec_s = res['curve_std']
+
+        ax.plot(cov_p, prec_p, color='#2ecc71', linewidth=2, label='Physics-Informed GMM')
+        ax.plot(cov_s, prec_s, color='#e74c3c', linewidth=2, label='Standard GMM')
+
+        ax.axhline(res['knn_pinn_acc'], color='#2ecc71', linestyle='--', linewidth=1.5,
+                   alpha=0.7, label=f"PINN kNN (acc={res['knn_pinn_acc']:.2f})")
+        ax.axhline(res['knn_std_acc'],  color='#e74c3c', linestyle='--', linewidth=1.5,
+                   alpha=0.7, label=f"Std kNN (acc={res['knn_std_acc']:.2f})")
+
+        mp = res['metrics_pinn']
+        ms = res['metrics_std']
+        info = (
+            f"PINN GMM  acc={mp['accuracy']:.2f}  ARI={mp['ari']:.2f}  NMI={mp['nmi']:.2f}  V={mp['v_measure']:.2f}\n"
+            f"Std  GMM  acc={ms['accuracy']:.2f}  ARI={ms['ari']:.2f}  NMI={ms['nmi']:.2f}  V={ms['v_measure']:.2f}"
+        )
+        ax.text(0.03, 0.05, info, transform=ax.transAxes, fontsize=8,
+                verticalalignment='bottom',
+                bbox=dict(boxstyle='round', facecolor='white', alpha=0.85))
+
+        ax.set_xlabel('Coverage (fraction of windows classified)', fontsize=11)
+        ax.set_ylabel('Precision (accuracy on classified windows)', fontsize=11)
+        ax.set_title(f'{level.capitalize()}-class GMM', fontsize=12, fontweight='bold')
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1.05)
+        ax.legend(fontsize=8, loc='lower left')
+        ax.grid(True, alpha=0.3)
+
+    fig.suptitle(
+        'GMM Precision-Coverage Tradeoff vs. kNN Supervised Baseline\n'
+        '(confidence threshold swept 0 → 0.99; curve moves left as threshold rises)',
+        fontsize=11, fontweight='bold',
+    )
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, 'gmm_precision_coverage.png'), dpi=300)
+    plt.close()
+    logger.info("Saved: gmm_precision_coverage.png")
+
+
+def plot_e2e_confusion(e2e_data, save_dir="results", suffix=''):
     """
     Side-by-side non-square confusion matrices for the end-to-end pipeline:
       rows  = 9 true anomaly types
@@ -1384,7 +1440,12 @@ def plot_e2e_confusion(e2e_data, save_dir="results"):
     all_preds = set()
     for data in e2e_data.values():
         all_preds.update(data["pred_labels"])
-    PRED_ORDER = ["normal"] + sorted(p for p in all_preds if p != "normal")
+    special = {"normal", "uncertain"}
+    PRED_ORDER = (
+        ["normal"]
+        + sorted(p for p in all_preds if p not in special)
+        + (["uncertain"] if "uncertain" in all_preds else [])
+    )
 
     fig, axes = plt.subplots(1, 2, figsize=(18, 8))
 
@@ -1409,7 +1470,7 @@ def plot_e2e_confusion(e2e_data, save_dir="results"):
         row_labels = [l.replace("_", "\n") for l in true_order]
         col_labels = [p.replace("/", "/\n") for p in pred_order]
 
-        detected = sum(p != "normal" for p in pred_labels)
+        detected = sum(p not in ("normal", "uncertain") for p in pred_labels)
         total = len(pred_labels)
         acc = detected / total if total else 0.0
 
@@ -1418,25 +1479,29 @@ def plot_e2e_confusion(e2e_data, save_dir="results"):
             vmin=0, vmax=1, ax=ax, linewidths=0.5,
             xticklabels=col_labels, yticklabels=row_labels,
         )
+        classifier_label = suffix.upper() if suffix else "kNN"
         title = model_tag.replace("_", " ").title()
         ax.set_title(
             f"{title}  (detection rate={acc:.2f})",
             fontsize=12, fontweight="bold",
         )
-        ax.set_xlabel("Predicted label (kNN classifier)", fontsize=11)
+        ax.set_xlabel(f"Predicted label ({classifier_label} classifier)", fontsize=11)
         ax.set_ylabel("True anomaly type", fontsize=11)
         plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
         plt.setp(ax.get_yticklabels(), rotation=0)
 
+    classifier_label = suffix.upper() if suffix else "kNN"
+    uncertain_note = "  'uncertain' = detected but below confidence threshold;" if suffix else ""
     fig.suptitle(
-        "End-to-end pipeline: detect → classify\n"
-        "'normal' column = missed detections; other columns = kNN classifier output",
+        f"End-to-end pipeline: detect → classify ({classifier_label})\n"
+        f"'normal' = missed detections;{uncertain_note} other columns = classifier output",
         fontsize=13, fontweight="bold",
     )
     plt.tight_layout()
-    plt.savefig(os.path.join(save_dir, "e2e_confusion.png"), dpi=300)
+    fname = f"e2e_confusion{'_' + suffix if suffix else ''}.png"
+    plt.savefig(os.path.join(save_dir, fname), dpi=300)
     plt.close()
-    logger.info("Saved: e2e_confusion.png")
+    logger.info("Saved: %s", fname)
 
 
 def plot_score_distributions(pinn_results, std_results, threshold_bundle_pinn,

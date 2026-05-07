@@ -15,7 +15,8 @@ from src.test_suite_runner import compare_models_on_anomalies
 from src.visualise import (create_comprehensive_report, plot_2d_scatter_with_threshold,
                            plot_roc_curves, plot_macro_class_confusion,
                            plot_micro_class_confusion, plot_e2e_confusion,
-                           plot_score_distributions, plot_training_diagnostics)
+                           plot_score_distributions, plot_training_diagnostics,
+                           plot_gmm_precision_coverage)
 from src.quantitative_metrics import run_full_quantitative_analysis
 from src.threshold import set_threshold
 from src.detection_metrics import run_detection_evaluation, windows_from_indices, run_e2e_classification
@@ -322,6 +323,8 @@ def run_full_test_suite(config: Config, train_again = False):
 
     logger.info("=== 9. End-to-end Pipeline Classification Evaluation ===")
     from sklearn.neighbors import KNeighborsClassifier
+    from src.quantitative_metrics import GMMClassifierWrapper
+
     knn_pinn = KNeighborsClassifier(n_neighbors=5).fit(
         knn_data['X_pinn'], knn_data['y_pinn_micro']
     )
@@ -340,6 +343,31 @@ def run_full_test_suite(config: Config, train_again = False):
     )
     plot_e2e_confusion(e2e_data, save_dir=config.RESULTS_DIR)
 
+    logger.info("=== 10. End-to-end Pipeline — GMM Unsupervised Classifier ===")
+    gmm_res = knn_data['gmm_results']
+    gmm_clf_pinn = GMMClassifierWrapper(
+        gmm_res['micro']['gmm_pinn'],
+        gmm_res['micro']['map_pinn'],
+        confidence_threshold=config.GMM_CONFIDENCE_THRESHOLD,
+    )
+    gmm_clf_std = GMMClassifierWrapper(
+        gmm_res['micro']['gmm_std'],
+        gmm_res['micro']['map_std'],
+        confidence_threshold=config.GMM_CONFIDENCE_THRESHOLD,
+    )
+    e2e_data_gmm = run_e2e_classification(
+        pinn_results=pinn_results,
+        standard_results=standard_results,
+        threshold_bundle_pinn=threshold_bundle_pinn,
+        threshold_bundle_std=threshold_bundle_std,
+        config=config,
+        classifier_pinn=gmm_clf_pinn,
+        classifier_std=gmm_clf_std,
+        micro_order=knn_data['micro_order'],
+    )
+    plot_e2e_confusion(e2e_data_gmm, save_dir=config.RESULTS_DIR, suffix='gmm')
+    plot_gmm_precision_coverage(gmm_res, save_dir=config.RESULTS_DIR)
+
     logger.info("=== Test Suite Complete ===")
     logger.info(f"All results saved to: {config.RESULTS_DIR}")
 
@@ -353,4 +381,4 @@ if __name__ == "__main__":
     logger.info("COMPREHENSIVE ANOMALY DETECTION TEST SUITE")
     logger.info("="*60)
     
-    run_full_test_suite(app_config, train_again = True)
+    run_full_test_suite(app_config, train_again = False)

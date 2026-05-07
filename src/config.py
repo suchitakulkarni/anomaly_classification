@@ -42,5 +42,7 @@ class Config:
     # after switching to multi-frequency training.
     PHYSICS_LOSS_WEIGHT = 1e-4 
 
+    GMM_CONFIDENCE_THRESHOLD = 0.7
+
     RESULTS_DIR = 'results'
     os.makedirs(RESULTS_DIR, exist_ok=True)

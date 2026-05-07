@@ -185,7 +185,8 @@ def run_e2e_classification(pinn_results, standard_results,
                         np.log10(float(result.mse_values[i]) + 1e-10),
                         np.log10(float(result.physics_values[i]) + 1e-10),
                     ]])
-                    pred = micro_order[int(clf.predict(log_point)[0])]
+                    pred_idx = int(clf.predict(log_point)[0])
+                    pred = "uncertain" if pred_idx < 0 else micro_order[pred_idx]
                 else:
                     pred = "normal"
                 pred_labels.append(pred)
