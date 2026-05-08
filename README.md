@@ -148,7 +148,6 @@ improve both detection and fine-grained classification over the standard model.
 
 * Physics-informed micro-class accuracy: **61%**
 * Standard micro-class accuracy: **52%**
-* 57% improvement in geometric cluster separation (Silhouette / Davies-Bouldin)
 
 ![Micro-class confusion matrix (kNN)](https://github.com/suchitakulkarni/anomaly_classification/blob/main/results/micro_class_confusion.png)
 
