@@ -25,3 +25,5 @@ results/final_large_dataset/**/saved_models/
 results/final_small_dataset/**/saved_models/
 results/final_large_dataset/**/*.npy
 results/final_small_dataset/**/*.npy
+
+README_old.md

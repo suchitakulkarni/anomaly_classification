@@ -1,9 +1,6 @@
 {
-  "pinn_avg_mahalanobis": 1.2909375394274507,
-  "std_avg_mahalanobis": 3.1273900582514993,
   "pinn_gmm_micro_acc": 0.5384615384615384,
   "std_gmm_micro_acc": 0.4230769230769231,
-  "pinn_gmm_micro_ari": 0.35309192073252194,
   "pinn_gmm_macro_acc": 0.6517094017094017,
   "std_gmm_macro_acc": 0.6495726495726496,
   "pinn_knn_micro_acc": 0.6092198581560283,
