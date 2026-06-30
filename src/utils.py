@@ -60,7 +60,7 @@ def set_all_seeds(seed=42):
     torch.cuda.manual_seed_all(seed)  # For multi-GPU
     
     # PyTorch backends
-    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.deterministic = False
     torch.backends.cudnn.benchmark = False
     
     # Python hash seed (for reproducibility across runs)

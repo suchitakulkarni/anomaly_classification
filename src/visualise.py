@@ -12,7 +12,6 @@ from matplotlib.colors import LogNorm
 import seaborn as sns
 
 from src.test_suite_runner import aggregate_anomaly_metrics
-from src.test_suite_runner import aggregate_anomaly_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -1400,8 +1399,8 @@ def plot_gmm_precision_coverage(gmm_results, save_dir="results"):
         mp = res['metrics_pinn']
         ms = res['metrics_std']
         info = (
-            f"PINN GMM  acc={mp['accuracy']:.2f}  ARI={mp['ari']:.2f}  NMI={mp['nmi']:.2f}  V={mp['v_measure']:.2f}\n"
-            f"Std  GMM  acc={ms['accuracy']:.2f}  ARI={ms['ari']:.2f}  NMI={ms['nmi']:.2f}  V={ms['v_measure']:.2f}"
+            f"PINN GMM  acc={mp['accuracy']:.2f}\n"
+            f"Std  GMM  acc={ms['accuracy']:.2f}"
         )
         ax.text(0.03, 0.05, info, transform=ax.transAxes, fontsize=8,
                 verticalalignment='bottom',
@@ -1728,3 +1727,51 @@ def plot_training_diagnostics(history_pinn, history_standard, X_train_np,
     fig.savefig(recon_path, dpi=120, bbox_inches="tight")
     plt.close(fig)
     logger.info("Saved reconstruction samples → %s", recon_path)
+
+
+def plot_multi_freq_auc(agg_df, save_dir="results"):
+    """
+    AUC vs omega for each anomaly type with ±1std error bars.
+    Two side-by-side subplots: Physics-Informed vs Standard.
+
+    agg_df must have columns: model, omega, anomaly_type, auc_mean, auc_std.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+
+    anomaly_types = sorted(agg_df['anomaly_type'].unique())
+    colors = plt.cm.tab10(np.linspace(0, 1, len(anomaly_types)))
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+    for ax, model_tag, title in [
+        (axes[0], 'physics_informed', 'Physics-Informed (PINN)'),
+        (axes[1], 'standard',         'Standard Baseline'),
+    ]:
+        df_model = agg_df[agg_df['model'] == model_tag]
+        for i, atype in enumerate(anomaly_types):
+            df_t = df_model[df_model['anomaly_type'] == atype].sort_values('omega')
+            if df_t.empty:
+                continue
+            ax.errorbar(
+                df_t['omega'], df_t['auc_mean'],
+                yerr=df_t['auc_std'],
+                label=atype.replace('_', ' '),
+                color=colors[i], marker='o', linewidth=1.5, capsize=3,
+            )
+        ax.axhline(0.5, color='gray', linestyle='--', alpha=0.5, label='random chance')
+        ax.set_xlabel('Test frequency ω (rad/s)', fontsize=12)
+        ax.set_ylabel('AUC (mean ± std)', fontsize=12)
+        ax.set_title(title, fontsize=13, fontweight='bold')
+        ax.legend(fontsize=7, ncol=2, loc='lower left')
+        ax.set_ylim(0, 1.05)
+        ax.grid(True, alpha=0.3)
+
+    fig.suptitle(
+        'AUC vs Test Frequency — PINN vs Standard\n(mean ± std across seeds)',
+        fontsize=13, fontweight='bold',
+    )
+    plt.tight_layout()
+    save_path = os.path.join(save_dir, 'multi_freq_auc.png')
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    logger.info("Saved: %s", save_path)

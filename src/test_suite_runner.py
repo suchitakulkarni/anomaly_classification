@@ -19,8 +19,9 @@ class AnomalyTestResult:
     model_name: str
 
 
-def run_anomaly_test_suite(config, model, x_clean, scaler, device, 
-                           model_name="Model", omega=2.0, dt=0.01):
+def run_anomaly_test_suite(config, model, x_clean, scaler, device,
+                           model_name="Model", omega=2.0, dt=0.01,
+                           seed_offset=0, verbose=True):
     """
     Runs comprehensive anomaly testing on a trained model.
     
@@ -96,15 +97,21 @@ def run_anomaly_test_suite(config, model, x_clean, scaler, device,
           "dt": dt, "seed": config.RANDOM_STATE + 8}, 40),
     ]
     
-    logger.info(f"=== Running Anomaly Test Suite for {model_name} ===")
-    
+    log = logger.info if verbose else logger.debug
+    log("=== Running Anomaly Test Suite for %s ===", model_name)
+
     for anomaly_type, inject_fn, kwargs, duration in anomaly_configs:
-        logger.info("Testing: %s...", anomaly_type)
+        log("Testing: %s...", anomaly_type)
+        effective_kwargs = (
+            {**kwargs, 'seed': kwargs['seed'] + seed_offset}
+            if seed_offset != 0 and 'seed' in kwargs
+            else kwargs
+        )
         if anomaly_type == 'baseline':
-            x_anom = inject_fn(**kwargs)
+            x_anom = inject_fn(**effective_kwargs)
             anom_idxs = [0]
         else:
-            x_anom, anom_idxs = inject_fn(x_clean, **kwargs)
+            x_anom, anom_idxs = inject_fn(x_clean, **effective_kwargs)
 
         recon, mse_vals, phy_vals = reconstruct_signal(
             model,
@@ -128,7 +135,7 @@ def run_anomaly_test_suite(config, model, x_clean, scaler, device,
             model_name=model_name
         )
     
-    logger.info(f"Completed {len(results)} anomaly tests.\n")
+    log("Completed %d anomaly tests.", len(results))
     return results
 
 

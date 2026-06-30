@@ -22,6 +22,14 @@ class Config:
     TEST_NOISE = 0.1
     TIMESTEPS = 1000               # length of the test baseline signal
 
+    # --- Multi-frequency / multi-seed evaluation ---
+    TEST_OMEGAS = [1.2, 2.0, 2.86, 3.5]   # frequencies spanning OMEGA_RANGE
+    NUM_TEST_SEEDS = 10                     # independent test seeds per omega
+    N_CAL_TIMESTEPS = 2000                  # clean calibration signal length per omega
+
+    # --- DataLoader ---
+    NUM_WORKERS = 4
+
     # --- Anomaly Injection Settings ---
     NUM_ANOMALIES = 1
     SEVERITY = 2
@@ -46,3 +54,5 @@ class Config:
 
     RESULTS_DIR = 'results'
     os.makedirs(RESULTS_DIR, exist_ok=True)
+
+    MLFLOW_EXPERIMENT = "harmonic_oscillator_anomaly_detection"

@@ -134,9 +134,10 @@ def compute_residual(reconstruction, omega, dt, scaler):
     residual = d2x_phys_dt2 + (omega**2) * x_phys
     return residual
 
-def train_model_with_validation(model, train_loader, val_loader, criterion, optimizer, 
+def train_model_with_validation(model, train_loader, val_loader, criterion, optimizer,
                                 num_epochs, physics_loss_weight, dt, device, scaler,
-                                patience=100, min_delta=1e-5, stop_early = False):
+                                patience=100, min_delta=1e-5, stop_early=False,
+                                mlflow_prefix=None):
     """
     Training with validation monitoring and early stopping.
     
@@ -247,8 +248,22 @@ def train_model_with_validation(model, train_loader, val_loader, criterion, opti
         history['val_physics'].append(avg_val_phy)
         history['val_total'].append(avg_val_total)
         history['overfitting_gap'].append(overfitting_gap)
-        # Print progress every 50 epochs
-        if epoch % 10 == 0 or epoch == num_epochs:
+        if mlflow_prefix is not None:
+            try:
+                import mlflow
+                mlflow.log_metrics({
+                    f"{mlflow_prefix}/train_loss": avg_train_total,
+                    f"{mlflow_prefix}/train_mse": avg_train_mse,
+                    f"{mlflow_prefix}/val_loss": avg_val_total,
+                    f"{mlflow_prefix}/val_mse": avg_val_mse,
+                    f"{mlflow_prefix}/val_physics": avg_val_phy,
+                    f"{mlflow_prefix}/gap": overfitting_gap,
+                }, step=epoch)
+            except ImportError:
+                pass
+
+        # Print progress every 10 epochs, and always on epoch 1
+        if epoch == 1 or epoch % 10 == 0 or epoch == num_epochs:
             logger.info(
             "Epoch %03d/%d | Train Loss: %.6f | Val Loss: %.6f | Val Phy Loss: %.6f | Gap: %.6f | Best: %s",
             epoch, num_epochs, avg_train_total, avg_val_total, avg_val_phy, overfitting_gap, best_epoch

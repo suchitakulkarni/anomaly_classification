@@ -2,13 +2,16 @@
 
 ## Summary
 
-This project studies how physics-informed losses shape representation space in time-series models.
+This project studies how physics-informed losses shape representation space in time-series anomaly detection.
 In a noisy and variable setting, anomaly types become separable in a 2D loss space defined by
-reconstruction error and physics violation, enabling simple classification after unsupervised detection.
+reconstruction error and physics violation, enabling simple downstream classification after unsupervised detection.
+
+Evaluated across **30 seeds and 4 frequencies** on both a small (10k timesteps) and a large (400k timesteps)
+dataset using a Physics-Informed LSTM autoencoder with Optuna hyperparameter optimisation and MLflow experiment tracking.
 
 ---
 
-![Anomaly classification in 2D MSE -- physics loss plane](https://github.com/suchitakulkarni/anomaly_classification/blob/main/results/2d_scatter_comparison.png)
+![Anomaly classification in 2D MSE — physics loss plane (small dataset)](results/final_small_dataset/seg20_ts500_plw3e-05/2d_scatter_comparison.png)
 
 ---
 
@@ -17,10 +20,12 @@ reconstruction error and physics violation, enabling simple classification after
 * Unsupervised anomaly detection without labeled anomalies
 * Physics-informed training induces **structure in representation space**
 * This structure enables **anomaly type classification with simple models**
+* The physics residual provides a signal channel unavailable to data-driven models — demonstrated both analytically and empirically
 * Separation persists under:
   * noisy signals (~10% noise)
   * variable anomaly strength and duration
   * varying signal parameters (frequency, amplitude, phase)
+  * different dataset scales (10k vs 400k timesteps)
 
 ---
 
@@ -39,8 +44,9 @@ an amplitude spike in how it violates the underlying physics, and those differen
 signature in the model's loss space. Exploiting that signature enables type-level classification without
 any labeled anomalies at training time.
 
-The evaluation uses simulated physical systems, where anomaly type, strength, and duration are all
-controlled, allowing precise analysis of how different faults manifest in model behavior.
+Detection and classification are also in tension as a dual-objective optimisation problem: thresholds
+that maximise detection rate suppress fine-grained classification signal, and vice versa. Hyperparameters
+(Optuna, 50 trials) are Pareto-optimised for simultaneous gains on both objectives.
 
 ---
 
@@ -67,10 +73,10 @@ is the classifier — the downstream model is intentionally simple to make that 
 
 ### Stage 1 — Unsupervised detection
 
-* Train LSTM on clean signals (no anomaly labels)
-* Compute (log MSE, log physics loss) for each window
-* Fit Mahalanobis distance in this 2D loss space on clean training data
-* Flag windows exceeding the 99th-percentile threshold as anomalous
+* Train LSTM autoencoder on clean signals (no anomaly labels)
+* Compute (log MSE, log physics loss) per window at inference time
+* Fit per-axis percentile thresholds on clean calibration data
+* Flag windows where MSE or physics loss exceeds the 99th-percentile threshold as anomalous
 
 ### Stage 2 — Anomaly type classification
 
@@ -90,6 +96,8 @@ via precision-coverage tradeoff as confidence threshold is swept
 * Simulated simple harmonic oscillator
 * ~10% additive noise
 * Training data varies across frequency, amplitude, and phase to avoid trivial overfitting to a single signal
+* **Small dataset:** 20 segments × 500 timesteps = 10k timesteps
+* **Large dataset:** 200 segments × 2000 timesteps = 400k timesteps
 
 ### Anomalies
 
@@ -118,7 +126,7 @@ To isolate the contribution of physics constraints, two LSTM variants are compar
 
 **Standard LSTM** — trained with reconstruction loss only (MSE)
 
-**Physics-informed LSTM (PINN)** — trained with combined reconstruction + physics loss
+**Physics-Informed LSTM (PINN)** — trained with combined reconstruction + physics loss
 
 Both use the same downstream pipeline. Any performance difference is attributable to the loss geometry
 induced by the physics term.
@@ -127,58 +135,93 @@ induced by the physics term.
 
 ## Results
 
+### Effect of dataset scale
+
+Physics-informed training helps in both regimes, but in different ways:
+
+| Metric | Small dataset (10k steps) | Large dataset (400k steps) |
+|---|---|---|
+| Detection AUC — PINN | 0.860 | 0.857 |
+| Detection AUC — Standard | 0.822 | 0.821 |
+| **Detection AUC advantage** | **+3.8pp** | **+3.7pp** |
+| kNN micro-class accuracy — PINN | 0.609 | 0.633 |
+| kNN micro-class accuracy — Standard | 0.477 | 0.607 |
+| **kNN classification advantage** | **+13.3pp** | **+2.6pp** |
+| GMM micro-class accuracy — PINN | 0.538 | 0.532 |
+| GMM micro-class accuracy — Standard | 0.423 | 0.472 |
+| **GMM classification advantage** | **+11.5pp** | **+6.0pp** |
+
+The detection advantage is stable across scales. The classification advantage is largest on the small
+dataset — with limited data, the physics constraint is the primary source of geometric structure in loss
+space. With a large dataset, the standard model learns enough of that structure from data alone,
+narrowing the gap.
+
 ### Detection
 
-Mahalanobis thresholding achieves high recall without any labeled anomalies. The physics-informed model
-significantly outperforms the standard model on detection rate across most anomaly classes.
+Per-axis percentile thresholding achieves high recall without any labeled anomalies. The physics-informed
+model consistently outperforms the standard model on detection AUC across anomaly types and frequencies.
 
-| Model | Detection rate (e2e) |
-|---|---|
-| Physics-informed kNN | 0.77 |
-| Standard kNN | 0.56 |
-| Physics-informed GMM | 0.68 |
-| Standard GMM | 0.49 |
+**Small dataset — AUC vs frequency:**
 
-![End-to-end detect → classify confusion matrix (kNN)](https://github.com/suchitakulkarni/anomaly_classification/blob/main/results/e2e_confusion.png)
+![AUC vs frequency (small dataset)](results/final_small_dataset/seg20_ts500_plw3e-05/multi_freq_auc.png)
+
+**Large dataset — AUC vs frequency:**
+
+![AUC vs frequency (large dataset)](results/final_large_dataset/seg200_ts2000_plw3e-05/multi_freq_auc.png)
 
 ### Classification (supervised kNN)
 
 kNN in 2D loss space separates anomaly types with meaningful accuracy. Physics-informed features
-improve both detection and fine-grained classification over the standard model.
+improve both detection and fine-grained classification over the standard model, with the advantage
+most pronounced on the small dataset.
 
-* Physics-informed micro-class accuracy: **61%**
-* Standard micro-class accuracy: **52%**
-* 57% improvement in geometric cluster separation (Silhouette / Davies-Bouldin)
+**Small dataset:**
 
-![Micro-class confusion matrix (kNN)](https://github.com/suchitakulkarni/anomaly_classification/blob/main/results/micro_class_confusion.png)
+![Micro-class confusion matrix — small dataset](results/final_small_dataset/seg20_ts500_plw3e-05/micro_class_confusion.png)
+
+**Large dataset:**
+
+![Micro-class confusion matrix — large dataset](results/final_large_dataset/seg200_ts2000_plw3e-05/micro_class_confusion.png)
 
 ### Classification (unsupervised GMM)
 
-As an unsupervised alternative, a GMM is fitted in the same 2D space without any anomaly labels.
-Performance is measured via precision-coverage tradeoff (precision on classified windows as confidence
-threshold is swept) and compared to the kNN flat-line baseline.
+A GMM is fitted in the same 2D space without any anomaly labels. Performance is measured via
+precision-coverage tradeoff: as the confidence threshold rises, fewer windows are classified but
+those that are classified are more accurate.
 
-| Model | ARI | NMI | V-measure |
-|---|---|---|---|
-| Physics-informed GMM | 0.42 | 0.59 | 0.59 |
-| Standard GMM | 0.31 | 0.51 | 0.51 |
+**Small dataset:**
 
-The physics-informed GMM approaches kNN precision at high confidence thresholds (top ~30% of windows
-by GMM posterior confidence), at the cost of leaving ~30% of detected anomalies unclassified.
-Standard GMM degrades more sharply, reflecting weaker cluster geometry without physics constraints.
+![GMM precision-coverage vs. kNN baseline — small dataset](results/final_small_dataset/seg20_ts500_plw3e-05/gmm_precision_coverage.png)
 
-The gap relative to kNN is largest for spectrally similar anomalies (harmonic contamination, white
-noise bursts) whose loss-space signatures overlap under Gaussian assumptions.
+**Large dataset:**
 
-![GMM precision-coverage vs. kNN baseline](https://github.com/suchitakulkarni/anomaly_classification/blob/main/results/gmm_precision_coverage.png)
-![End-to-end confusion matrix (GMM)](https://github.com/suchitakulkarni/anomaly_classification/blob/main/results/e2e_confusion_gmm.png)
+![GMM precision-coverage vs. kNN baseline — large dataset](results/final_large_dataset/seg200_ts2000_plw3e-05/gmm_precision_coverage.png)
 
-### Representation quality
+### End-to-end pipeline
 
-The 2D scatter below shows anomalous windows overlaid with Mahalanobis ellipses and angle-classifier zones.
+The full detect → classify pipeline is evaluated end-to-end. The "normal" column in the confusion
+matrix below represents missed detections; other columns show the classifier's type assignment.
+
+**Small dataset (kNN classifier):**
+
+![End-to-end confusion matrix — small dataset](results/final_small_dataset/seg20_ts500_plw3e-05/e2e_confusion.png)
+
+**Large dataset (kNN classifier):**
+
+![End-to-end confusion matrix — large dataset](results/final_large_dataset/seg200_ts2000_plw3e-05/e2e_confusion.png)
+
+### Loss space geometry
+
+The 2D scatter shows anomalous windows overlaid with per-axis classification thresholds.
 Cluster coherence is substantially clearer for the physics-informed model.
 
-![2D scatter with threshold ellipses](https://github.com/suchitakulkarni/anomaly_classification/blob/main/results/2d_scatter_with_threshold.png)
+**Small dataset:**
+
+![2D scatter with threshold — small dataset](results/final_small_dataset/seg20_ts500_plw3e-05/2d_scatter_with_threshold.png)
+
+**Large dataset:**
+
+![2D scatter with threshold — large dataset](results/final_large_dataset/seg200_ts2000_plw3e-05/2d_scatter_with_threshold.png)
 
 ---
 
@@ -191,10 +234,11 @@ Instead:
 > Physics-informed loss shapes the geometry of the loss space, making anomaly types separable —
 > both for supervised and fully unsupervised classifiers.
 
-This allows simple downstream models to succeed without complex feature engineering. The GMM
-result is particularly telling: meaningful structure is recoverable with zero labels, and the gap
-to supervised kNN is largest precisely where the 2D space is insufficient (spectrally similar classes),
-not where the clustering approach itself fails.
+The physics residual acts as an anomaly discriminator, providing a signal channel that is structurally
+unavailable to data-driven models. This is demonstrated analytically (the residual of the harmonic
+oscillator equation is non-zero only when the signal deviates from physical behaviour) and empirically
+(the classification advantage is largest precisely when data is scarce and the physics constraint
+provides the only reliable source of geometric structure).
 
 ---
 
@@ -204,9 +248,10 @@ not where the clustering approach itself fails.
 Captures temporal dependencies; the physics loss is computed on the reconstructed sequence, so
 temporal coherence matters.
 
-**Why Mahalanobis distance?**
-Models correlation between the two loss components and gives a single anomaly score without
-requiring labeled anomalies at training time.
+**Why per-axis percentile threshold?**
+Fits independently on clean calibration data for each axis (MSE and physics loss), requiring no
+labeled anomalies. Per-axis thresholding naturally partitions the 2D space into detection quadrants
+aligned with the anomaly macro-classes.
 
 **Why kNN?**
 Used intentionally to demonstrate that performance comes from representation structure, not
@@ -215,6 +260,10 @@ classifier complexity. A more complex classifier would obscure that point.
 **Why GMM as unsupervised classifier?**
 Tests whether the geometric structure induced by physics-informed training is strong enough for
 purely unsupervised type discovery — no labels anywhere in the pipeline.
+
+**Why Optuna for hyperparameter optimisation?**
+Detection and classification are in tension as objectives. Optuna's Pareto-front search (50 trials)
+identifies hyperparameters that improve both simultaneously rather than trading one off against the other.
 
 ---
 
@@ -245,7 +294,10 @@ purely unsupervised type discovery — no labels anywhere in the pipeline.
 
 ```
 project/
-  main.py
+  main.py                   — full pipeline: train, threshold, evaluate, visualise
+  sweep.py                  — multi-seed / multi-frequency sweep runner
+  sweep_optuna.py           — Pareto HPO sweep (Optuna, 50 trials)
+  eval_more_seeds.py        — extended seed evaluation
   requirements.txt
   src/
     config.py
@@ -253,16 +305,16 @@ project/
     dataset.py
     train.py
     evaluate.py
-    threshold.py          — Mahalanobis threshold fitting and detection
-    detection_metrics.py  — ROC/AUC, precision/recall, e2e classification eval
-    quantitative_metrics.py
+    threshold.py            — per-axis percentile threshold fitting and detection
+    detection_metrics.py    — ROC/AUC, precision/recall, e2e classification eval
+    quantitative_metrics.py — kNN and GMM classification, physics loss reduction
     test_suite_runner.py
+    theoretical_analysis.py — analytical derivation of physics residual as discriminator
     visualise.py
     utils.py
   results/
-    saved_models/
-    *.png                 — all output plots
-    *.csv                 — numeric evaluation tables
+    final_small_dataset/    — full results for 10k-timestep training run
+    final_large_dataset/    — full results for 400k-timestep training run
 ```
 
 ---
@@ -284,5 +336,8 @@ numpy
 pandas
 scikit-learn
 matplotlib
+seaborn
 torch
+mlflow
+optuna
 ```

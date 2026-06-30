@@ -77,6 +77,8 @@ def run_detection_evaluation(
     threshold_bundle_pinn,
     threshold_bundle_std,
     config,
+    save=True,
+    verbose=True,
 ):
     """
     Compute detection metrics for every anomaly type and both models.
@@ -88,6 +90,7 @@ def run_detection_evaluation(
     """
     from src.threshold import detect
 
+    log = logger.info if verbose else logger.debug
     rows = []
 
     anomaly_types = [k for k in pinn_results if k != "baseline"]
@@ -130,7 +133,7 @@ def run_detection_evaluation(
                 }
             )
 
-            logger.info(
+            log(
                 "%s | %s — AUC=%.3f  P=%.3f  R=%.3f  F1=%.3f  latency=%s",
                 model_tag, anomaly_type,
                 auc if auc is not None else float("nan"),
@@ -141,9 +144,10 @@ def run_detection_evaluation(
     df = pd.DataFrame(rows, columns=["model", "anomaly_type", "auc", "precision",
                                       "recall", "f1", "latency_windows"])
 
-    save_path = os.path.join(config.RESULTS_DIR, "detection_evaluation.csv")
-    df.to_csv(save_path, index=False)
-    logger.info("Saved detection evaluation to %s", save_path)
+    if save:
+        save_path = os.path.join(config.RESULTS_DIR, "detection_evaluation.csv")
+        df.to_csv(save_path, index=False)
+        logger.info("Saved detection evaluation to %s", save_path)
 
     return df
 

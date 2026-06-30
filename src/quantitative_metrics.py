@@ -1,13 +1,8 @@
+import json
 import numpy as np
-from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
-from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score, homogeneity_completeness_v_measure
 from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import StandardScaler
-from scipy.spatial.distance import pdist, squareform
 from scipy.optimize import linear_sum_assignment
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os, sys, logging
+import os, logging
 
 logger = logging.getLogger(__name__)
 
@@ -33,143 +28,20 @@ MACRO_CLASS_MAP = {
 MACRO_CLASS_ORDER = ['mse_dominant', 'both_fail', 'physics_dominant']
 
 
-def compute_cluster_separation_metrics(results, model_name="Model"):
-    """
-    Computes quantitative metrics for how well anomaly types are separated.
-    
-    Metrics:
-    - Silhouette Score: [-1, 1], higher is better (measures cluster cohesion)
-    - Davies-Bouldin Index: [0, inf), lower is better (ratio of within/between cluster distances)
-    - Calinski-Harabasz Index: [0, inf), higher is better (ratio of between/within cluster dispersion)
-    """
-    all_mse = []
-    all_physics = []
-    all_labels = []
-    label_names = []
-    
-    for idx, (anom_type, result) in enumerate(results.items()):
-        all_mse.extend(result.mse_values)
-        all_physics.extend(result.physics_values)
-        all_labels.extend([idx] * len(result.mse_values))
-        label_names.append(anom_type)
-    
-    X = np.column_stack([
-        np.log10(np.array(all_mse) + 1e-10),
-        np.log10(np.array(all_physics) + 1e-10)
-    ])
-    
-    labels = np.array(all_labels)
-    
-    silhouette = silhouette_score(X, labels)
-    davies_bouldin = davies_bouldin_score(X, labels)
-    calinski_harabasz = calinski_harabasz_score(X, labels)
-    
-    logger.info("=== %s Separation Metrics ===", model_name)
-    logger.info("Silhouette Score: %.4f (higher is better, range [-1, 1])", silhouette)
-    logger.info("Davies-Bouldin Index: %.4f (lower is better)", davies_bouldin)
-    logger.info("Calinski-Harabasz Index: %.2f (higher is better)", calinski_harabasz)
-    
-    return {
-        "silhouette": silhouette,
-        "davies_bouldin": davies_bouldin,
-        "calinski_harabasz": calinski_harabasz,
-        "X": X,
-        "labels": labels,
-        "label_names": label_names
-    }
-
-
-def compute_pairwise_separability(results, model_name="Model"):
-    """
-    Computes pairwise separability between each anomaly type.
-    Returns matrix showing how distinguishable each pair is.
-    """
-    anomaly_types = list(results.keys())
-    n_types = len(anomaly_types)
-    
-    separability_matrix = np.zeros((n_types, n_types))
-    
-    for i, type_i in enumerate(anomaly_types):
-        for j, type_j in enumerate(anomaly_types):
-            if i == j:
-                separability_matrix[i, j] = 0
-                continue
-            
-            mse_i = np.log10(results[type_i].mse_values + 1e-10)
-            phy_i = np.log10(results[type_i].physics_values + 1e-10)
-            X_i = np.column_stack([mse_i, phy_i])
-            
-            mse_j = np.log10(results[type_j].mse_values + 1e-10)
-            phy_j = np.log10(results[type_j].physics_values + 1e-10)
-            X_j = np.column_stack([mse_j, phy_j])
-            
-            mean_i = X_i.mean(axis=0)
-            mean_j = X_j.mean(axis=0)
-            
-            cov_i = np.cov(X_i.T)
-            cov_j = np.cov(X_j.T)
-            pooled_cov = (cov_i + cov_j) / 2
-            
-            try:
-                inv_cov = np.linalg.inv(pooled_cov)
-                mahalanobis_dist = np.sqrt((mean_i - mean_j).T @ inv_cov @ (mean_i - mean_j))
-                separability_matrix[i, j] = mahalanobis_dist
-            except np.linalg.LinAlgError:
-                euclidean_dist = np.linalg.norm(mean_i - mean_j)
-                separability_matrix[i, j] = euclidean_dist
-    
-    logger.info("=== %s Pairwise Separability (Mahalanobis Distance) ===", model_name)
-    logger.info("Larger values indicate better separation between anomaly types")
-    
-    return separability_matrix, anomaly_types
-
-
-def plot_separability_heatmap(sep_matrix, anomaly_types, model_name, save_dir="results"):
-    """
-    Plots heatmap of pairwise separability.
-    """
-    os.makedirs(save_dir, exist_ok=True)
-    
-    plt.figure(figsize=(10, 8))
-    
-    labels = [at.replace("_", "\n") for at in anomaly_types]
-    
-    sns.heatmap(sep_matrix, annot=True, fmt=".2f", cmap="YlOrRd",
-                xticklabels=labels, yticklabels=labels,
-                cbar_kws={'label': 'Mahalanobis Distance'})
-    
-    plt.title(f"{model_name} - Pairwise Anomaly Separability", 
-             fontsize=14, fontweight='bold')
-    plt.tight_layout()
-    
-    filename = f"separability_heatmap_{model_name.lower().replace(' ', '_').replace('-', '_')}.png"
-    plt.savefig(os.path.join(save_dir, filename), dpi=300)
-    plt.close()
-    logger.info(f"Saved: {filename}")
-
-
 def compute_physics_loss_reduction(pinn_results, standard_results):
-    """
-    Computes how much physics loss is reduced by physics-informed model.
-    """
     logger.info("=== Physics Loss Reduction Analysis ===")
-    
+
     for anom_type in pinn_results.keys():
         pinn_mean = np.mean(pinn_results[anom_type].physics_values)
-        std_mean = np.mean(standard_results[anom_type].physics_values)
-        
+        std_mean  = np.mean(standard_results[anom_type].physics_values)
         reduction_factor = std_mean / pinn_mean if pinn_mean > 0 else np.inf
-        reduction_pct = ((std_mean - pinn_mean) / std_mean) * 100 if std_mean > 0 else 0
-        
+        reduction_pct    = ((std_mean - pinn_mean) / std_mean) * 100 if std_mean > 0 else 0
         logger.info("%-25s: %8.1fx reduction (%5.1f%% decrease)", anom_type, reduction_factor, reduction_pct)
-    
+
     all_pinn_phy = np.concatenate([r.physics_values for r in pinn_results.values()])
-    all_std_phy = np.concatenate([r.physics_values for r in standard_results.values()])
-    
+    all_std_phy  = np.concatenate([r.physics_values for r in standard_results.values()])
     overall_reduction = np.mean(all_std_phy) / np.mean(all_pinn_phy)
-    overall_pct = ((np.mean(all_std_phy) - np.mean(all_pinn_phy)) / np.mean(all_std_phy)) * 100
-    
-    #logger.info("{'OVERALL':25s}: %8.1fx reduction (%5.1f % decrease)", overall_reduction, overall_pct)
+    overall_pct       = ((np.mean(all_std_phy) - np.mean(all_pinn_phy)) / np.mean(all_std_phy)) * 100
     logger.info("%-25s: %8.1fx reduction (%5.1f%% decrease)", "OVERALL", overall_reduction, overall_pct)
 
 
@@ -177,12 +49,9 @@ def compare_classification_accuracy(pinn_results, standard_results, window_size=
     """
     Classifies anomaly macro-type from (log MSE, log physics) features.
 
-    Critically: uses only the ground-truth anomalous windows (those that overlap
-    the injected anomaly event) rather than all windows in the signal. Including
-    clean windows dilutes the signal — their centroid sits at the normal mean,
-    collapsing all anomaly types onto the same direction.
-
-    Returns feature arrays and labels for downstream plotting.
+    Uses only ground-truth anomalous windows (those overlapping the injected event)
+    rather than all windows — clean windows collapse all anomaly types onto the
+    normal mean and dilute the per-type signal.
     """
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.model_selection import cross_val_score
@@ -222,8 +91,8 @@ def compare_classification_accuracy(pinn_results, standard_results, window_size=
     X_pinn, y_pinn_macro, y_pinn_micro = prepare_data(pinn_results)
     X_std,  y_std_macro,  y_std_micro  = prepare_data(standard_results)
 
-    n_macro   = len(MACRO_CLASS_ORDER)
-    n_splits  = min(5, min(np.bincount(y_pinn_macro).min(), np.bincount(y_std_macro).min()))
+    n_macro  = len(MACRO_CLASS_ORDER)
+    n_splits = min(5, min(np.bincount(y_pinn_macro).min(), np.bincount(y_std_macro).min()))
     knn = KNeighborsClassifier(n_neighbors=5)
 
     pinn_scores = cross_val_score(knn, X_pinn, y_pinn_macro, cv=n_splits)
@@ -269,11 +138,7 @@ class GMMClassifierWrapper:
 def fit_gmm_classifier(X, y_true, n_components, random_state=42):
     """
     Fits a GaussianMixture unsupervised on X, then uses the Hungarian algorithm to
-    align the arbitrary component IDs to ground-truth class IDs from y_true.
-
-    Returns:
-        gmm                : fitted GaussianMixture
-        component_to_class : dict mapping GMM component index → ground-truth class index
+    align arbitrary component IDs to ground-truth class IDs from y_true.
     """
     gmm = GaussianMixture(
         n_components=n_components,
@@ -287,7 +152,7 @@ def fit_gmm_classifier(X, y_true, n_components, random_state=42):
 
     cluster_labels = gmm.predict(X)
 
-    # cost[i, j] = number of samples in GMM component i that belong to ground-truth class j
+    # cost[i, j] = number of samples in GMM component i belonging to ground-truth class j
     cost = np.zeros((n_components, n_components))
     for c, t in zip(cluster_labels, y_true):
         if int(t) < n_components:
@@ -302,19 +167,12 @@ def fit_gmm_classifier(X, y_true, n_components, random_state=42):
 def evaluate_gmm(gmm, component_to_class, X, y_true):
     """
     Evaluates a fitted GMM against ground-truth labels after Hungarian alignment.
-
-    Returns dict with: accuracy, ARI, NMI, homogeneity, completeness, V-measure.
+    Returns dict with accuracy.
     """
     cluster_labels = gmm.predict(X)
     y_pred = np.array([component_to_class.get(int(c), 0) for c in cluster_labels])
-
-    ari = adjusted_rand_score(y_true, y_pred)
-    nmi = normalized_mutual_info_score(y_true, y_pred, average_method='arithmetic')
-    hom, com, v = homogeneity_completeness_v_measure(y_true, y_pred)
     acc = float((y_pred == np.asarray(y_true)).mean())
-
-    return {'accuracy': acc, 'ari': ari, 'nmi': nmi,
-            'homogeneity': hom, 'completeness': com, 'v_measure': v}
+    return {'accuracy': acc}
 
 
 def gmm_precision_coverage_curve(gmm, component_to_class, X, y_true):
@@ -345,7 +203,7 @@ def gmm_precision_coverage_curve(gmm, component_to_class, X, y_true):
 def compare_gmm_classification_accuracy(knn_data, random_state=42):
     """
     Fits GMM classifiers at macro (3-class) and micro (N-class) level.
-    Logs ARI, NMI, V-measure, and accuracy vs. kNN supervised upper bound.
+    Logs accuracy vs. kNN supervised upper bound.
 
     Returns nested dict keyed by 'macro'/'micro', each containing fitted GMMs,
     evaluation metrics, kNN reference accuracy, and precision-coverage curve data.
@@ -375,10 +233,8 @@ def compare_gmm_classification_accuracy(knn_data, random_state=42):
         m_pinn = evaluate_gmm(gmm_pinn, map_pinn, X_pinn, y_pinn)
         m_std  = evaluate_gmm(gmm_std,  map_std,  X_std,  y_std)
 
-        logger.info("Physics-Informed — acc=%.3f  ARI=%.3f  NMI=%.3f  V=%.3f",
-                    m_pinn['accuracy'], m_pinn['ari'], m_pinn['nmi'], m_pinn['v_measure'])
-        logger.info("Standard         — acc=%.3f  ARI=%.3f  NMI=%.3f  V=%.3f",
-                    m_std['accuracy'],  m_std['ari'],  m_std['nmi'],  m_std['v_measure'])
+        logger.info("Physics-Informed — acc=%.3f", m_pinn['accuracy'])
+        logger.info("Standard         — acc=%.3f", m_std['accuracy'])
 
         knn = KNeighborsClassifier(n_neighbors=5)
         n_splits = min(5, min(np.bincount(y_pinn).min(), np.bincount(y_std).min()))
@@ -408,45 +264,12 @@ def compare_gmm_classification_accuracy(knn_data, random_state=42):
 
 def run_full_quantitative_analysis(pinn_results, standard_results, save_dir="results", window_size=30):
     """
-    Runs all quantitative analyses and generates comparison report.
+    Runs quantitative analyses: physics loss reduction, kNN and GMM classification.
     """
     logger.info("="*70)
-    logger.info("QUANTITATIVE SEPARATION ANALYSIS")
+    logger.info("QUANTITATIVE ANALYSIS")
     logger.info("="*70)
-    
-    pinn_metrics = compute_cluster_separation_metrics(pinn_results, "Physics-Informed")
-    std_metrics = compute_cluster_separation_metrics(standard_results, "Standard")
-    
-    logger.info("-"*70)
-    logger.info("INTERPRETATION:")
-    logger.info("-"*70)
-    silh_improvement = pinn_metrics["silhouette"] - std_metrics["silhouette"]
-    db_improvement = std_metrics["davies_bouldin"] - pinn_metrics["davies_bouldin"]
-    
-    logger.info("Silhouette improvement: + %.4f", silh_improvement)
-    logger.info("Davies-Bouldin improvement: + %.4f", db_improvement)
-    
-    if silh_improvement > 0.05:
-        logger.info("Physics-informed model shows BETTER cluster separation")
-    elif silh_improvement > 0:
-        logger.info("Physics-informed model shows SLIGHT improvement in separation")
-    else:
-        logger.info("Models show similar separation quality")
-    
-    pinn_sep, types = compute_pairwise_separability(pinn_results, "Physics-Informed")
-    std_sep, _ = compute_pairwise_separability(standard_results, "Standard")
-    
-    plot_separability_heatmap(pinn_sep, types, "Physics-Informed", save_dir)
-    plot_separability_heatmap(std_sep, types, "Standard", save_dir)
-    
-    avg_pinn_sep = pinn_sep[np.triu_indices_from(pinn_sep, k=1)].mean()
-    avg_std_sep = std_sep[np.triu_indices_from(std_sep, k=1)].mean()
-    
-    logger.info("Average pairwise separation:")
-    logger.info("  Physics-Informed: %.3f", avg_pinn_sep)
-    logger.info("  Standard:         %.3f", avg_std_sep)
-    logger.info("  Improvement:      + %.1f%%", float(avg_pinn_sep/avg_std_sep - 1)*100)
-    
+
     compute_physics_loss_reduction(pinn_results, standard_results)
 
     knn_data = compare_classification_accuracy(pinn_results, standard_results, window_size=window_size)
@@ -456,6 +279,19 @@ def run_full_quantitative_analysis(pinn_results, standard_results, save_dir="res
     logger.info("-"*70)
     gmm_results = compare_gmm_classification_accuracy(knn_data)
     knn_data['gmm_results'] = gmm_results
+
+    summary = {
+        "pinn_gmm_micro_acc":  float(gmm_results["micro"]["metrics_pinn"]["accuracy"]),
+        "std_gmm_micro_acc":   float(gmm_results["micro"]["metrics_std"]["accuracy"]),
+        "pinn_gmm_macro_acc":  float(gmm_results["macro"]["metrics_pinn"]["accuracy"]),
+        "std_gmm_macro_acc":   float(gmm_results["macro"]["metrics_std"]["accuracy"]),
+        "pinn_knn_micro_acc":  float(gmm_results["micro"]["knn_pinn_acc"]),
+        "std_knn_micro_acc":   float(gmm_results["micro"]["knn_std_acc"]),
+    }
+    summary_path = os.path.join(save_dir, "quantitative_summary.json")
+    with open(summary_path, "w") as f:
+        json.dump(summary, f, indent=2)
+    logger.info("Saved quantitative summary to %s", summary_path)
 
     logger.info("="*70)
     logger.info("ANALYSIS COMPLETE")
