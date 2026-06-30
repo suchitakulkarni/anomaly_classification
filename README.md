@@ -137,24 +137,27 @@ induced by the physics term.
 
 ### Effect of dataset scale
 
-Physics-informed training helps in both regimes, but in different ways:
+All values are means ± standard error across 30 seeds × 4 frequencies.
 
 | Metric | Small dataset (10k steps) | Large dataset (400k steps) |
 |---|---|---|
-| Detection AUC — PINN | 0.860 | 0.857 |
-| Detection AUC — Standard | 0.822 | 0.821 |
-| **Detection AUC advantage** | **+3.8pp** | **+3.7pp** |
-| kNN micro-class accuracy — PINN | 0.609 | 0.633 |
-| kNN micro-class accuracy — Standard | 0.477 | 0.607 |
-| **kNN classification advantage** | **+13.3pp** | **+2.6pp** |
-| GMM micro-class accuracy — PINN | 0.538 | 0.532 |
-| GMM micro-class accuracy — Standard | 0.423 | 0.472 |
-| **GMM classification advantage** | **+11.5pp** | **+6.0pp** |
+| Detection AUC — PINN | 0.860 ± 0.026 | 0.857 ± 0.027 |
+| Detection AUC — Standard | 0.822 ± 0.028 | 0.821 ± 0.028 |
+| **Detection AUC advantage** | **+3.8pp ± 0.6pp** | **+3.7pp ± 0.9pp** |
+| kNN micro-class accuracy — PINN | 0.546 ± 0.009 | 0.552 ± 0.008 |
+| kNN micro-class accuracy — Standard | 0.429 ± 0.011 | 0.564 ± 0.009 |
+| **kNN classification advantage** | **+11.7pp ± 0.9pp** | **−1.1pp ± 1.0pp** |
+| GMM micro-class accuracy — PINN | 0.504 ± 0.007 | 0.508 ± 0.006 |
+| GMM micro-class accuracy — Standard | 0.441 ± 0.006 | 0.511 ± 0.006 |
+| **GMM classification advantage** | **+6.4pp ± 0.8pp** | **−0.3pp ± 0.6pp** |
 
-The detection advantage is stable across scales. The classification advantage is largest on the small
-dataset — with limited data, the physics constraint is the primary source of geometric structure in loss
-space. With a large dataset, the standard model learns enough of that structure from data alone,
-narrowing the gap.
+The detection advantage is stable and significant across both scales. The classification advantage
+tells a different story: on the small dataset it is large and consistent (+11.7pp kNN, +6.4pp GMM);
+on the large dataset it vanishes entirely (−1.1pp kNN, −0.3pp GMM, both within one standard error of zero).
+
+With limited data, the physics constraint is the primary source of geometric structure in loss space —
+the standard model lacks the signal to learn it. With 40× more data, the standard model learns
+equivalent representations on its own, and the physics term adds nothing to classification.
 
 ### Classification (supervised kNN)
 
