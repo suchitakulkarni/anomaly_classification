@@ -1,0 +1,16 @@
+axes.labelsize        : 16
+axes.titlesize        : 14
+xtick.labelsize       : 16
+ytick.labelsize       : 16
+xtick.direction       : in
+ytick.direction       : in
+xtick.minor.visible   : on
+ytick.minor.visible   : on
+ytick.major.size      : 7
+ytick.minor.size      : 3
+xtick.major.size      : 7
+xtick.minor.size      : 3
+legend.loc            : best
+legend.fontsize       : 14
+lines.linewidth       : 2.0
+patch.linewidth       : 2.0

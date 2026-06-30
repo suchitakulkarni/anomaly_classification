@@ -13,6 +13,8 @@ import seaborn as sns
 
 from src.test_suite_runner import aggregate_anomaly_metrics
 
+plt.style.use('anomaly.mplstyle')
+
 logger = logging.getLogger(__name__)
 
 def _get_full_reconstruction(reconstruction_windows, N_signal, window_size):
