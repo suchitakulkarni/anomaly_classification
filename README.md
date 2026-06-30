@@ -156,19 +156,6 @@ dataset — with limited data, the physics constraint is the primary source of g
 space. With a large dataset, the standard model learns enough of that structure from data alone,
 narrowing the gap.
 
-### Detection
-
-Per-axis percentile thresholding achieves high recall without any labeled anomalies. The physics-informed
-model consistently outperforms the standard model on detection AUC across anomaly types and frequencies.
-
-**Small dataset — AUC vs frequency:**
-
-![AUC vs frequency (small dataset)](results/final_small_dataset/seg20_ts500_plw3e-05/multi_freq_auc.png)
-
-**Large dataset — AUC vs frequency:**
-
-![AUC vs frequency (large dataset)](results/final_large_dataset/seg200_ts2000_plw3e-05/multi_freq_auc.png)
-
 ### Classification (supervised kNN)
 
 kNN in 2D loss space separates anomaly types with meaningful accuracy. Physics-informed features
@@ -182,20 +169,6 @@ most pronounced on the small dataset.
 **Large dataset:**
 
 ![Micro-class confusion matrix — large dataset](results/final_large_dataset/seg200_ts2000_plw3e-05/micro_class_confusion.png)
-
-### Classification (unsupervised GMM)
-
-A GMM is fitted in the same 2D space without any anomaly labels. Performance is measured via
-precision-coverage tradeoff: as the confidence threshold rises, fewer windows are classified but
-those that are classified are more accurate.
-
-**Small dataset:**
-
-![GMM precision-coverage vs. kNN baseline — small dataset](results/final_small_dataset/seg20_ts500_plw3e-05/gmm_precision_coverage.png)
-
-**Large dataset:**
-
-![GMM precision-coverage vs. kNN baseline — large dataset](results/final_large_dataset/seg200_ts2000_plw3e-05/gmm_precision_coverage.png)
 
 ### End-to-end pipeline
 
