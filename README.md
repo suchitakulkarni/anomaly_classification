@@ -262,7 +262,6 @@ identifies hyperparameters that improve both simultaneously rather than trading 
 * **Calibrated GMM confidence** — temperature scaling on GMM posteriors to improve precision-coverage
   curve shape and make abstention decisions more trustworthy
 * **Robustness to frequency estimation error** — evaluate effect of using FFT-estimated vs. ground-truth frequency in the physics loss
-* **Real-world sensor datasets** — industrial vibration or ECG data as next validation target
 
 ---
 
