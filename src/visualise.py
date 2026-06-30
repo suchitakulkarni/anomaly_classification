@@ -598,7 +598,7 @@ def plot_overfitting_analysis(history, physics_weight,
         ax3.set_yscale('log')
     else:
         ax3.text(0.5, 0.5, 'Physics Weight = 0\n(Standard Autoencoder)', 
-                ha='center', va='center', fontsize=14, transform=ax3.transAxes)
+                ha='center', va='center', transform=ax3.transAxes)
         ax3.set_title('Physics Loss (Not Used)')
     
     # Plot 4: Overfitting Gap
@@ -749,25 +749,25 @@ def plot_loss_distributions(pinn_results, standard_results, save_dir="results"):
     labels = [at.replace("_", "\n") for at in anomaly_types]
     
     axes[0, 0].boxplot(pinn_mse_data, labels=labels)
-    axes[0, 0].set_title("Physics-Informed: MSE Distribution", fontweight='bold')
+    axes[0, 0].set_title("Physics-Informed: MSE Distribution")
     axes[0, 0].set_ylabel("MSE")
     axes[0, 0].tick_params(axis='x', rotation=45)
     axes[0, 0].grid(True, alpha=0.3)
     
     axes[0, 1].boxplot(pinn_phy_data, labels=labels)
-    axes[0, 1].set_title("Physics-Informed: Physics Loss Distribution", fontweight='bold')
+    axes[0, 1].set_title("Physics-Informed: Physics Loss Distribution")
     axes[0, 1].set_ylabel("Physics Loss")
     axes[0, 1].tick_params(axis='x', rotation=45)
     axes[0, 1].grid(True, alpha=0.3)
     
     axes[1, 0].boxplot(std_mse_data, labels=labels)
-    axes[1, 0].set_title("Standard: MSE Distribution", fontweight='bold')
+    axes[1, 0].set_title("Standard: MSE Distribution")
     axes[1, 0].set_ylabel("MSE")
     axes[1, 0].tick_params(axis='x', rotation=45)
     axes[1, 0].grid(True, alpha=0.3)
     
     axes[1, 1].boxplot(std_phy_data, labels=labels)
-    axes[1, 1].set_title("Standard: Physics Loss Distribution", fontweight='bold')
+    axes[1, 1].set_title("Standard: Physics Loss Distribution")
     axes[1, 1].set_ylabel("Physics Loss")
     axes[1, 1].tick_params(axis='x', rotation=45)
     axes[1, 1].grid(True, alpha=0.3)
@@ -837,7 +837,7 @@ def plot_2d_scatter_by_anomaly_type(pinn_results, standard_results,
         
         ax.set_xlabel("MSE")
         ax.set_ylabel("Physics Loss")
-        ax.set_title(f"{title} Model", fontweight='bold')
+        ax.set_title(f"{title} Model")
         ax.legend(loc='best', ncol=2)
         ax.grid(True, alpha=0.3)
         ax.set_xscale('log')
@@ -1115,7 +1115,7 @@ def plot_2d_scatter_with_threshold(pinn_results, std_results, threshold_bundle_p
         ]
         for lx, ly, zone_name, zone_color in zone_labels:
             ax.text(
-                lx, ly, zone_name, fontsize=7, color=zone_color,
+                lx, ly, zone_name, color=zone_color,
                 ha='center', va='center', zorder=6,
                 bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.6),
             )
@@ -1203,7 +1203,7 @@ def plot_roc_curves(eval_df, save_dir="results",
             for bar, val in zip(bars, aucs):
                 if not np.isnan(val):
                     ax.text(bar.get_x() + bar.get_width() / 2, val + 0.01,
-                            f'{val:.3f}', ha='center', va='bottom', fontsize=9)
+                            f'{val:.3f}', ha='center', va='bottom')
             ax.set_ylim(0, 1)
             ax.set_ylabel("AUC")
             ax.axhline(0.5, color='k', linestyle='--', alpha=0.5, label='random')
@@ -1213,16 +1213,16 @@ def plot_roc_curves(eval_df, save_dir="results",
         ax.set_title(
             f"{anom_type.replace('_', ' ').title()}\n"
             f"PINN AUC={pinn_str}  Std AUC={std_str}",
-            fontsize=9, fontweight='bold',
+            
         )
-        ax.legend(fontsize=8)
+        ax.legend()
         ax.grid(True, alpha=0.3)
 
     for j in range(n_types, len(axes_flat)):
         axes_flat[j].axis('off')
 
     plt.suptitle("ROC Curves — PINN vs Standard (per anomaly type)",
-                 fontweight='bold', y=1.01)
+                  y=1.01)
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "roc_curves.png"), dpi=300, bbox_inches='tight')
     plt.close()
@@ -1255,7 +1255,7 @@ def plot_confusion_matrix(classifications, true_labels, save_dir="results"):
     )
     ax.set_xlabel("Predicted label")
     ax.set_ylabel("True label")
-    ax.set_title("Classification Confusion Matrix (row-normalized)", fontweight='bold')
+    ax.set_title("Classification Confusion Matrix (row-normalized)")
     plt.xticks(rotation=45, ha='right')
     plt.yticks(rotation=0)
     plt.tight_layout()
@@ -1298,7 +1298,7 @@ def plot_macro_class_confusion(knn_data, save_dir="results"):
             vmin=0, vmax=1, ax=ax, linewidths=0.5,
             xticklabels=labels, yticklabels=labels,
         )
-        ax.set_title(f"{title}  (KNN accuracy={acc:.2f})", fontweight='bold')
+        ax.set_title(f"{title}  (KNN accuracy={acc:.2f})")
         ax.set_xlabel("Predicted macro-class")
         ax.set_ylabel("True macro-class")
         plt.setp(ax.get_xticklabels(), rotation=30, ha='right')
@@ -1306,8 +1306,7 @@ def plot_macro_class_confusion(knn_data, save_dir="results"):
 
     fig.suptitle(
         "Macro-class KNN Confusion Matrices (row-normalised)\n"
-        "normal | mse_dominant | physics_dominant | both_fail | subtle",
-        fontweight='bold',
+        "normal | mse_dominant | physics_dominant | both_fail | subtle"
     )
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "macro_class_confusion.png"), dpi=300)
@@ -1351,15 +1350,14 @@ def plot_micro_class_confusion(knn_data, save_dir="results"):
             vmin=0, vmax=1, ax=ax, linewidths=0.5,
             xticklabels=labels, yticklabels=labels,
         )
-        ax.set_title(f"{title}  (KNN accuracy={acc:.2f})", fontweight='bold')
+        ax.set_title(f"{title}  (KNN accuracy={acc:.2f})")
         ax.set_xlabel("Predicted anomaly type")
         ax.set_ylabel("True anomaly type")
         plt.setp(ax.get_xticklabels(), rotation=35, ha='right')
         plt.setp(ax.get_yticklabels(), rotation=0)
 
     fig.suptitle(
-        "Micro-class KNN Confusion Matrices (row-normalised) — all 9 anomaly types",
-        fontweight='bold',
+        "Micro-class KNN Confusion Matrices (row-normalised) — all 9 anomaly types"
     )
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, "micro_class_confusion.png"), dpi=300)
@@ -1400,13 +1398,13 @@ def plot_gmm_precision_coverage(gmm_results, save_dir="results"):
             f"PINN GMM  acc={mp['accuracy']:.2f}\n"
             f"Std  GMM  acc={ms['accuracy']:.2f}"
         )
-        ax.text(0.03, 0.05, info, transform=ax.transAxes, fontsize=8,
+        ax.text(0.03, 0.05, info, transform=ax.transAxes, 
                 verticalalignment='bottom',
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.85))
 
         ax.set_xlabel('Coverage (fraction of windows classified)')
         ax.set_ylabel('Precision (accuracy on classified windows)')
-        ax.set_title(f'{level.capitalize()}-class GMM', fontweight='bold')
+        ax.set_title(f'{level.capitalize()}-class GMM')
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1.05)
         ax.legend(loc='lower left')
@@ -1414,8 +1412,7 @@ def plot_gmm_precision_coverage(gmm_results, save_dir="results"):
 
     fig.suptitle(
         'GMM Precision-Coverage Tradeoff vs. kNN Supervised Baseline\n'
-        '(confidence threshold swept 0 → 0.99; curve moves left as threshold rises)',
-        fontweight='bold',
+        '(confidence threshold swept 0 → 0.99; curve moves left as threshold rises)'
     )
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, 'gmm_precision_coverage.png'), dpi=300)
@@ -1480,7 +1477,6 @@ def plot_e2e_confusion(e2e_data, save_dir="results", suffix=''):
         title = model_tag.replace("_", " ").title()
         ax.set_title(
             f"{title}  (detection rate={acc:.2f})",
-            fontweight="bold",
         )
         ax.set_xlabel(f"Predicted label ({classifier_label} classifier)")
         ax.set_ylabel("True anomaly type")
@@ -1491,8 +1487,7 @@ def plot_e2e_confusion(e2e_data, save_dir="results", suffix=''):
     uncertain_note = "  'uncertain' = detected but below confidence threshold;" if suffix else ""
     fig.suptitle(
         f"End-to-end pipeline: detect → classify ({classifier_label})\n"
-        f"'normal' = missed detections;{uncertain_note} other columns = classifier output",
-        fontweight="bold",
+        f"'normal' = missed detections;{uncertain_note} other columns = classifier output"
     )
     plt.tight_layout()
     fname = f"e2e_confusion{'_' + suffix if suffix else ''}.png"
@@ -1589,7 +1584,7 @@ def plot_score_distributions(pinn_results, std_results, threshold_bundle_pinn,
         ax.set_xscale('log')
         ax.set_xlabel(score_label)
         ax.set_ylabel("Density")
-        ax.set_title(title, fontweight='bold')
+        ax.set_title(title)
         ax.legend(ncol=2, loc='upper right')
         ax.grid(True, alpha=0.3, which='both')
 
@@ -1643,7 +1638,7 @@ def plot_training_diagnostics(history_pinn, history_standard, X_train_np,
 
     # ── Figure 1: loss curves ──────────────────────────────────────────────────
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    fig.suptitle("Training Loss Curves", fontweight="bold")
+    fig.suptitle("Training Loss Curves")
 
     for ax, history, label, show_physics in [
         (axes[0], history_pinn,     "Physics-Informed", True),
@@ -1658,7 +1653,7 @@ def plot_training_diagnostics(history_pinn, history_standard, X_train_np,
         ax.set_title(label)
         ax.set_xlabel("Epoch")
         ax.set_ylabel("Loss")
-        ax.legend(fontsize=8)
+        ax.legend()
         ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -1679,7 +1674,7 @@ def plot_training_diagnostics(history_pinn, history_standard, X_train_np,
     model_standard.eval()
 
     fig, axes = plt.subplots(n_samples, 1, figsize=(14, 4 * n_samples))
-    fig.suptitle("Training Signal Reconstruction (scaled)", fontweight="bold")
+    fig.suptitle("Training Signal Reconstruction (scaled)")
     if n_samples == 1:
         axes = [axes]
 
@@ -1716,7 +1711,7 @@ def plot_training_diagnostics(history_pinn, history_standard, X_train_np,
         ax.set_title(f"Training segment {seg_idx}")
         ax.set_xlabel("Timestep")
         ax.set_ylabel("Scaled value")
-        ax.legend(fontsize=8)
+        ax.legend()
         ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -1758,14 +1753,13 @@ def plot_multi_freq_auc(agg_df, save_dir="results"):
         ax.axhline(0.5, color='gray', linestyle='--', alpha=0.5, label='random chance')
         ax.set_xlabel('Test frequency ω (rad/s)')
         ax.set_ylabel('AUC (mean ± std)')
-        ax.set_title(title, fontweight='bold')
+        ax.set_title(title)
         ax.legend(ncol=2, loc='lower left')
         ax.set_ylim(0, 1.05)
         ax.grid(True, alpha=0.3)
 
     fig.suptitle(
-        'AUC vs Test Frequency — PINN vs Standard\n(mean ± std across seeds)',
-        fontweight='bold',
+        'AUC vs Test Frequency — PINN vs Standard\n(mean ± std across seeds)'
     )
     plt.tight_layout()
     save_path = os.path.join(save_dir, 'multi_freq_auc.png')
