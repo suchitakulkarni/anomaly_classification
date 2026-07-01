@@ -33,7 +33,7 @@ Across 30 seeds and 4 frequencies
 |---|---|
 | ![Small dataset loss space](results/final_small_dataset/seg20_ts500_plw3e-05/2d_scatter_comparison.png) | ![Large dataset loss space](results/final_large_dataset/seg200_ts2000_plw3e-05/2d_scatter_comparison.png) |
 
-For a more in-depth explanation, see [notes.md](notes.md).
+For a more in-depth explanation, see [notes.md](notes.md). These notes contain more quantative information and additional figures. 
 
 ## Tech stack
 
